@@ -5,9 +5,9 @@ services:
     networks:
       - baota_net
     ports:
-      - "${WEB_PORT}:${WEB_PORT}"
+      - ${WEB_PORT}:${WEB_PORT}
     volumes:
-      - "${APP_PATH}/data:/vertex"
+      - ${APP_PATH}/data:/vertex
     environment:
       - TZ=Asia/Shanghai
       - PORT=${WEB_PORT}
