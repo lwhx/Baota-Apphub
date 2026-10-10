@@ -1,0 +1,34 @@
+name: Build verified kejilion icons (one-time)
+on:
+  push:
+    branches:
+      - fix/kejilion-app-icons-20261011
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image tooling
+        run: python -m pip install 'Pillow>=10,<13' 'CairoSVG>=2.7,<3' 'requests>=2.31,<3'
+      - name: Download and verify original logos and render all PNG icons
+        run: python scripts/rebuild_kejilion_icons.py
+      - name: Commit generated icons
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apphub/kejilion-*/icon.png
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(icons): add verified project logos and distinct game icons"
+            git push origin HEAD:refs/heads/fix/kejilion-app-icons-20261011
+          fi
