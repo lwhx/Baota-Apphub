@@ -14,7 +14,7 @@ services:
       - ${UPLOAD_LOCATION}:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD}
+      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD:?Set a unique database password before deployment}
       - DB_HOSTNAME=${APP_NAME}-postgres
       - DB_USERNAME=${PANEL_DB_USER}
       - DB_DATABASE_NAME=${PANEL_DB_NAME}
@@ -43,7 +43,7 @@ services:
     volumes:
       - ${CACHE_PATH}:/cache
     environment:
-      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD}
+      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD:?Set a unique database password before deployment}
       - DB_HOSTNAME=${APP_NAME}-postgres
       - DB_USERNAME=${PANEL_DB_USER}
       - DB_DATABASE_NAME=${PANEL_DB_NAME}
@@ -82,7 +82,7 @@ services:
           memory: ${MEMORY_LIMIT}
     environment:
       - REDIS_HOSTNAME=${APP_NAME}-redis
-      - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD}
+      - POSTGRES_PASSWORD=${PANEL_DB_USER_PASSWORD:?Set a unique database password before deployment}
       - POSTGRES_USER=${PANEL_DB_USER}
       - POSTGRES_DB=${PANEL_DB_NAME}
       - POSTGRES_INITDB_ARGS=--data-checksums

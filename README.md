@@ -1,10 +1,10 @@
 # Baota-Apphub - 宝塔面板 Docker 应用资源库
 
-[![GitHub stars](https://img.shields.io/github/stars/makotowu/Baota-Apphub?style=flat-square)](https://github.com/makotowu/Baota-Apphub/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/makotowu/Baota-Apphub?style=flat-square)](https://github.com/makotowu/Baota-Apphub/network)
-[![GitHub issues](https://img.shields.io/github/issues/makotowu/Baota-Apphub?style=flat-square)](https://github.com/makotowu/Baota-Apphub/issues)
+[![GitHub stars](https://img.shields.io/github/stars/lwhx/Baota-Apphub?style=flat-square)](https://github.com/lwhx/Baota-Apphub/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/lwhx/Baota-Apphub?style=flat-square)](https://github.com/lwhx/Baota-Apphub/network)
+[![GitHub issues](https://img.shields.io/github/issues/lwhx/Baota-Apphub?style=flat-square)](https://github.com/lwhx/Baota-Apphub/issues)
 
-> **社区维护的宝塔面板 Docker 应用资源库，提供完整配置的 Docker 应用，支持一键导入部署**
+> **社区维护的宝塔面板 Docker 应用资源库，提供完整配置的 Docker 应用，支持模板化导入部署**
 
 ## 🚀 项目简介
 
@@ -29,12 +29,15 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
 ### 🌟 社区维护优势
 - **持续更新**：社区成员持续维护和更新应用配置
 - **快速响应**：问题反馈和功能请求得到及时处理
-- **开源透明**：所有配置文件开源，安全可靠
+- **开源透明**：所有配置文件公开可审查，但部署前仍需检查镜像来源、权限及凭据
 - **丰富资源**：涵盖各类常用 Docker 应用
 
 ## 📦 应用目录
 
-本仓库包含 **200+** 个精心配置的 Docker 应用，涵盖以下分类：
+> 部分历史应用仅有元数据，尚无可安装模板，已标记为不可安装。请勿将所有列出的应用视为通过实际部署测试。
+
+
+本仓库包含 **344** 个精心配置的 Docker 应用，涵盖以下分类：
 
 - **🌐 Web 服务**：Nginx、Apache、Caddy 等
 - **💾 数据库**：MySQL、PostgreSQL、Redis、MongoDB 等
@@ -64,11 +67,11 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
 4. 选择 **Git 仓库导入**
 5. 输入仓库地址：
    ```
-   https://github.com/makotowu/Baota-Apphub.git
+   https://github.com/lwhx/Baota-Apphub.git
    ```
    或国内镜像：
    ```
-   https://cnb.cool/makotowu/Baota-Apphub.git
+   https://github.com/lwhx/Baota-Apphub.git
    ```
 6. 点击 **导入** 完成
 
@@ -134,12 +137,12 @@ apphub/                               # 应用根目录（必须为 apphub）
 
 ## 📞 技术支持
 
-- **GitHub Issues**：[提交问题和建议](https://github.com/makotowu/Baota-Apphub/issues)
+- **GitHub Issues**：[提交问题和建议](https://github.com/lwhx/Baota-Apphub/issues)
 - **QQ 交流群**：1061259740（宝塔 Docker 官方交流群）
 
 ## 📄 开源协议
 
-本项目采用 [MIT License](LICENSE) 开源协议。
+本仓库暂未附独立许可证文件。应用模板和第三方组件的许可条件请以各上游项目为准；发布或二次分发前需完成许可证核验。
 
 ## 🙏 致谢
 
