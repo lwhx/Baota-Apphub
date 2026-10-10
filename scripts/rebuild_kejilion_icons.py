@@ -29,6 +29,7 @@ CUSTOM = {
     "ice-climber-arena": ("ICE", "#317BB8", "#DBF3FF"),
     "neon-arena-fps": ("FPS", "#28224A", "#FF5BE0"),
     "wxchat": ("WX", "#159F62", "#FFFFFF"),
+    "hubproxy": ("HP", "#1367A9", "#D9F3FF"),
 }
 
 
@@ -129,6 +130,15 @@ def fallback_icon(app: str) -> Image.Image:
         d.line((127, 136, 127, 181), fill=accent, width=7)
         d.line((51, 102, 95, 102), fill=accent, width=7)
         d.line((158, 102, 203, 102), fill=accent, width=7)
+    elif app == "hubproxy":
+        d.rounded_rectangle((55, 60, 108, 135), radius=10, fill="#E6F6FF")
+        d.rounded_rectangle((148, 60, 201, 135), radius=10, fill="#E6F6FF")
+        d.ellipse((76, 75, 88, 87), fill=primary)
+        d.ellipse((169, 108, 181, 120), fill=primary)
+        d.line((111, 88, 145, 88), fill=accent, width=9)
+        d.polygon(((140, 76), (157, 88), (140, 100)), fill=accent)
+        d.line((143, 112, 111, 112), fill=accent, width=9)
+        d.polygon(((117, 100), (100, 112), (117, 124)), fill=accent)
     elif app == "wxchat":
         d.ellipse((44, 48, 174, 150), fill="#FFFFFF")
         d.ellipse((111, 103, 207, 180), fill="#CEF8DF")
@@ -145,18 +155,6 @@ def normalized(app: str, image: Image.Image) -> Image.Image:
     if app in CUSTOM:
         return image
     output = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    if app == "hubproxy":
-        # Upstream favicon is dark/monochrome. Give it a light plate and a
-        # small identifying label so it stays readable in Baota's icon list.
-        d = ImageDraw.Draw(output)
-        d.rounded_rectangle((9, 9, 247, 247), radius=57, fill="#EFF6FF", outline="#A5C7EC", width=2)
-        image.thumbnail((164, 164), Image.Resampling.LANCZOS)
-        output.alpha_composite(image, ((SIZE - image.width) // 2, 21))
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
-        label = "HUB"
-        bounds = d.textbbox((0, 0), label, font=font)
-        d.text(((SIZE - bounds[2] + bounds[0]) // 2, 194), label, fill="#1E497F", font=font)
-        return output
     if app == "fast-note-sync-service":
         d = ImageDraw.Draw(output)
         d.rounded_rectangle((8, 8, 248, 248), radius=55, fill="#1767B3")

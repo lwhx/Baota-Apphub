@@ -53,12 +53,6 @@
     "path": "public/icon-512x512.png",
     "git_blob_sha": "736e302d5d3cb95bb675536b92ff2cc4d4541716"
   },
-  "hubproxy": {
-    "repository": "sky22333/hubproxy",
-    "ref": "main",
-    "path": "web/public/favicon.ico",
-    "git_blob_sha": "1ead7d63ee12249f8fc59a3d5daf02a3cdc51bba"
-  },
   "monitor": {
     "repository": "monitor-probe/monitor",
     "ref": "main",
