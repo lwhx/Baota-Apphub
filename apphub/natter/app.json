@@ -40,14 +40,6 @@
             "unit": ""
         },
         {
-            "attr": "service_name",
-            "name": "服务名称",
-            "type": "string",
-            "default": "natter-service",
-            "suffix": "服务名称",
-            "unit": ""
-        },
-        {
             "attr": "command",
             "name": "命令",
             "type": "string",
@@ -97,12 +89,6 @@
         }
     ],
     "env": [
-        {
-            "key": "service_name",
-            "type": "string",
-            "default": null,
-            "desc": "服务名称"
-        },
         {
             "key": "command",
             "type": "string",

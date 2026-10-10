@@ -1,5 +1,5 @@
 services:
-  ${SERVICE_NAME}:
+  natter:
     image: "nattertool/natter:2.1.1"
     deploy:
       resources:

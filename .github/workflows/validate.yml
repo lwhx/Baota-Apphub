@@ -43,6 +43,7 @@ jobs:
           while IFS= read -r -d '' file; do
             total=$((total + 1))
             if ! output=$(docker compose -f "$file" config --no-interpolate --no-env-resolution --no-path-resolution --quiet 2>&1); then
+              printf "FAILED: %s\n" "$file"
               echo "::error file=$file::Compose model validation failed"
               printf '%s\n' "$output"
               failures=$((failures + 1))
