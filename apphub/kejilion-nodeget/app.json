@@ -1,0 +1,127 @@
+{
+  "appid": -1,
+  "appname": "kejilion-nodeget",
+  "apptitle": "kejilion - NodeGet",
+  "apptype": "DevOps",
+  "appTypeCN": "DevOps",
+  "appversion": [
+    {
+      "m_version": "latest",
+      "s_version": []
+    }
+  ],
+  "appdesc": "服务器节点监控与自动化运维，内置 PostgreSQL 数据库；服务启动日志中可获取登录凭据。 来源：kejilion/apps（独立适配，尚未进行宝塔实机安装验证）。",
+  "appstatus": 1,
+  "home": "https://nodeget.com",
+  "help": "https://github.com/kejilion/apps/blob/main/nodeget.conf",
+  "updateat": 1791676800,
+  "depend": null,
+  "field": [
+    {
+      "attr": "domain",
+      "name": "访问域名",
+      "type": "textarea",
+      "default": "",
+      "suffix": "可选；对外服务建议配 HTTPS 与访问控制",
+      "unit": ""
+    },
+    {
+      "attr": "allow_access",
+      "name": "允许公网直连",
+      "type": "checkbox",
+      "default": false,
+      "suffix": "管理类应用默认禁用公网访问",
+      "unit": ""
+    },
+    {
+      "attr": "web_port",
+      "name": "宿主机端口",
+      "type": "number",
+      "default": 45621,
+      "suffix": "应用的 Web/API 端口",
+      "unit": ""
+    },
+    {
+      "attr": "bind_ip",
+      "name": "监听地址",
+      "type": "string",
+      "default": "127.0.0.1",
+      "suffix": "127.0.0.1 仅本机，0.0.0.0 对外开放",
+      "unit": ""
+    },
+    {
+      "attr": "postgres_password",
+      "name": "数据库密码（仅建议字母数字）",
+      "type": "string",
+      "default": "",
+      "suffix": "必填；不可使用公开默认密码",
+      "unit": ""
+    },
+    {
+      "attr": "cpus",
+      "name": "CPU 核心数限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    },
+    {
+      "attr": "memory_limit",
+      "name": "内存限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    }
+  ],
+  "env": [
+    {
+      "key": "web_port",
+      "type": "port",
+      "default": null,
+      "desc": "宿主机端口"
+    },
+    {
+      "key": "bind_ip",
+      "type": "string",
+      "default": null,
+      "desc": "监听地址"
+    },
+    {
+      "key": "postgres_password",
+      "type": "string",
+      "default": null,
+      "desc": "数据库密码（仅建议字母数字）"
+    },
+    {
+      "key": "app_path",
+      "type": "path",
+      "default": null,
+      "desc": "应用数据目录"
+    },
+    {
+      "key": "host_ip",
+      "type": "string",
+      "default": null,
+      "desc": "主机 IP"
+    },
+    {
+      "key": "cpus",
+      "type": "number",
+      "default": null,
+      "desc": "CPU 限制"
+    },
+    {
+      "key": "memory_limit",
+      "type": "number",
+      "default": null,
+      "desc": "内存限制"
+    }
+  ],
+  "volumes": {
+    "data": {
+      "type": "path",
+      "desc": "数据库和应用数据持久化目录"
+    }
+  }
+}

@@ -37,7 +37,7 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
 > 部分历史应用仅有元数据，尚无可安装模板，已标记为不可安装。请勿将所有列出的应用视为通过实际部署测试。
 
 
-本仓库包含 **344** 个精心配置的 Docker 应用，涵盖以下分类：
+本仓库包含 **367** 个精心配置的 Docker 应用，涵盖以下分类：
 
 - **🌐 Web 服务**：Nginx、Apache、Caddy 等
 - **💾 数据库**：MySQL、PostgreSQL、Redis、MongoDB 等
@@ -48,6 +48,12 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
 - **🤖 AI 工具**：ChatNio、Lobe-Chat 等
 - **📝 笔记工具**：Trilium、Siyuan、Obsidian 等
 - **🔧 开发工具**：GitLab、Gitea、Code-Server 等
+
+## 🧩 kejilion 来源应用
+
+新增 23 个来自 [kejilion/apps](https://github.com/kejilion/apps) 的 Docker 应用适配模板。
+**标题统一以 `kejilion - ` 开头，应用目录统一为 `apphub/kejilion-<id>`**；不覆盖已有同名应用。
+详见 [来源、完整清单与安全说明](docs/kejilion-import.md)。新模板尚未经过宝塔实机部署测试。
 
 ## 🛠️ 安装部署
 

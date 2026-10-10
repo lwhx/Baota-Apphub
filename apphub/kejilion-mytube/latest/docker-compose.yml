@@ -1,0 +1,37 @@
+services:
+  kejilion-mytube:
+    image: franklioxygen/mytube:frontend-latest
+    container_name: ${APP_NAME}
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP}:${WEB_PORT}:5556"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=/api
+      - VITE_BACKEND_URL=
+      - TZ=Asia/Shanghai
+    networks:
+      - baota_net
+      - internal
+    labels:
+      createdBy: bt_apps
+      source: kejilion-apps
+  backend:
+    image: franklioxygen/mytube:backend-latest
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP}:${PANEL_APP_PORT_API}:5551"
+    environment:
+      - PORT=5551
+      - TZ=Asia/Shanghai
+    volumes:
+      - "${APP_PATH}/data/uploads:/app/uploads"
+      - "${APP_PATH}/data/data:/app/data"
+    networks:
+      - internal
+networks:
+  baota_net:
+    external: true
+  internal:
+    driver: bridge

@@ -1,0 +1,28 @@
+services:
+  kejilion-dstatus:
+    image: ghcr.io/fev125/dstatus:latest
+    container_name: ${APP_NAME}
+    restart: unless-stopped
+    networks:
+      - baota_net
+    ports:
+      - "${BIND_IP}:${WEB_PORT}:5555"
+    volumes:
+      - "${APP_PATH}/data/data:/app/data"
+      - "${APP_PATH}/data/logs:/app/logs"
+    environment:
+      - "NODE_ENV=production"
+      - "BOT_ENABLED=false"
+      - "TZ=Asia/Shanghai"
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS}
+          memory: ${MEMORY_LIMIT}
+    labels:
+      createdBy: bt_apps
+      source: kejilion-apps
+
+networks:
+  baota_net:
+    external: true
