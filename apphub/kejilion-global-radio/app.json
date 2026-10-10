@@ -1,0 +1,108 @@
+{
+  "appid": -1,
+  "appname": "kejilion-global-radio",
+  "apptitle": "kejilion - GlobalRadio",
+  "apptype": "Media",
+  "appTypeCN": "影音娱乐",
+  "appversion": [
+    {
+      "m_version": "latest",
+      "s_version": []
+    }
+  ],
+  "appdesc": "全球电台播放、搜索与收藏。 来源：kejilion/apps（独立适配模板，尚未在宝塔实机验证）。",
+  "appstatus": 1,
+  "home": "https://github.com/moli-xia/global-radio",
+  "help": "https://github.com/kejilion/apps/blob/main/global-radio.conf",
+  "updateat": 1791676800,
+  "depend": null,
+  "field": [
+    {
+      "attr": "domain",
+      "name": "访问域名",
+      "type": "textarea",
+      "default": "",
+      "suffix": "可选；建议经 HTTPS 反向代理",
+      "unit": ""
+    },
+    {
+      "attr": "allow_access",
+      "name": "允许公网直连",
+      "type": "checkbox",
+      "default": true,
+      "suffix": "请按业务需要开放；管理/网关类默认不开放",
+      "unit": ""
+    },
+    {
+      "attr": "web_port",
+      "name": "宿主机访问端口",
+      "type": "number",
+      "default": 45611,
+      "suffix": "应用部署端口",
+      "unit": ""
+    },
+    {
+      "attr": "bind_ip",
+      "name": "监听地址",
+      "type": "string",
+      "default": "0.0.0.0",
+      "suffix": "127.0.0.1 仅本机访问；0.0.0.0 对外监听",
+      "unit": ""
+    },
+    {
+      "attr": "cpus",
+      "name": "CPU 核心数限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    },
+    {
+      "attr": "memory_limit",
+      "name": "内存限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    }
+  ],
+  "env": [
+    {
+      "key": "web_port",
+      "type": "port",
+      "default": null,
+      "desc": "宿主机访问端口"
+    },
+    {
+      "key": "bind_ip",
+      "type": "string",
+      "default": null,
+      "desc": "监听地址"
+    },
+    {
+      "key": "app_path",
+      "type": "path",
+      "default": null,
+      "desc": "应用数据目录"
+    },
+    {
+      "key": "host_ip",
+      "type": "string",
+      "default": null,
+      "desc": "主机IP"
+    },
+    {
+      "key": "cpus",
+      "type": "number",
+      "default": null,
+      "desc": "CPU核心数限制"
+    },
+    {
+      "key": "memory_limit",
+      "type": "number",
+      "default": null,
+      "desc": "内存限制"
+    }
+  ],
+  "volumes": {}
+}
