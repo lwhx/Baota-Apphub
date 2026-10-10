@@ -66,14 +66,6 @@
             "unit": ""
         },
         {
-            "attr": "",
-            "name": "",
-            "type": "string",
-            "default": "http",
-            "suffix": "",
-            "unit": ""
-        },
-        {
             "attr": "cpus",
             "name": "cpu核心数限制",
             "type": "number",
@@ -114,12 +106,6 @@
             "type": "string",
             "default": null,
             "desc": "COOKIE加密密钥"
-        },
-        {
-            "key": "",
-            "type": "string",
-            "default": null,
-            "desc": ""
         },
         {
             "key": "app_path",
