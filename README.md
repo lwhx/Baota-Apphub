@@ -69,10 +69,7 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
    ```
    https://github.com/lwhx/Baota-Apphub.git
    ```
-   或国内镜像：
-   ```
-   https://github.com/lwhx/Baota-Apphub.git
-   ```
+   国内网络环境可以先下载 GitHub ZIP 压缩包，再选择文件导入。
 6. 点击 **导入** 完成
 
 #### 方法二：压缩包导入
