@@ -17,6 +17,7 @@ REQUIRED_USER_SECRETS = {
         "PANEL_ADMIN_PASSWORD", "PANEL_DB_USER_PASSWORD", "PANEL_REDIS_ROOT_PASSWORD"
     ),
     "vanblog": ("PANEL_DB_ROOT_PASSWORD",),
+    "qiandao": ("AES_PWD", "COOKIE_PWD"),
     "firefox-browser": ("HTTP_PWD",),
     "libreoffice": ("HTTP_PWD",),
     "remmina": ("HTTP_PWD",),

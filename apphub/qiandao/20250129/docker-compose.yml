@@ -26,9 +26,9 @@ services:
       # 指定访问域名，建议修改，否则通过邮件重置密码等功能无效
       # - DOMAIN=
       # AES加密密钥，强烈建议修改
-       - AES_KEY=${AES_PWD}
+       - AES_KEY=${AES_PWD:?Set a unique AES key}
       # cookie加密密钥，强烈建议修改
-       - COOKIE_SECRET=${COOKIE_PWD}
+       - COOKIE_SECRET=${COOKIE_PWD:?Set a unique cookie secret}
       # Cookie在客户端中保留的天数
       # - COOKIE_DAY=5
       # 需要使用MySQL时设置为'mysql'
@@ -142,18 +142,6 @@ services:
       # - MAIL_SSL=True
       # - MAILGUN_KEY=
     image: qdtoday/qd:20250129
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPUS}
-          memory: ${MEMORY_LIMIT}
-    # image: a76yyyy/qiandao:latest
-    deploy:
-      resources:
-        limits:
-          cpus: ${CPUS}
-          memory: ${MEMORY_LIMIT}
-    # image: a76yyyy/qiandao:lite-latest
     deploy:
       resources:
         limits:
