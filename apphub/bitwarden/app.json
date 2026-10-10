@@ -59,8 +59,8 @@
             "attr": "signups_allowed",
             "name": "允许注册",
             "type": "string",
-            "default": "true",
-            "suffix": "允许注册",
+            "default": "false",
+            "suffix": "默认关闭公开注册；确需开放请自行修改并评估风险",
             "unit": ""
         },
         {

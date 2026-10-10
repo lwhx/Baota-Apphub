@@ -40,7 +40,7 @@
             "unit": ""
         },
         {
-            "attr": "",
+            "attr": "panel_db_host",
             "name": "数据库服务",
             "type": "string",
             "default": "mysql",
@@ -138,7 +138,7 @@
     ],
     "env": [
         {
-            "key": "",
+            "key": "panel_db_host",
             "type": "string",
             "default": null,
             "desc": "数据库服务"

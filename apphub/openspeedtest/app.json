@@ -48,7 +48,7 @@
             "unit": ""
         },
         {
-            "attr": "web_port",
+            "attr": "panel_app_port_https",
             "name": "HTTPS 端口",
             "type": "number",
             "default": 40189,
@@ -80,7 +80,7 @@
             "desc": "HTTP 端口"
         },
         {
-            "key": "web_port",
+            "key": "panel_app_port_https",
             "type": "port",
             "default": null,
             "desc": "HTTPS 端口"

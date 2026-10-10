@@ -53,24 +53,16 @@
             "attr": "aes_pwd",
             "name": "AES加密密钥",
             "type": "string",
-            "default": "AESPWD",
-            "suffix": "AES加密密钥",
+            "default": "",
+            "suffix": "必填：设置仅此实例使用的随机密钥；升级时必须保留原密钥",
             "unit": ""
         },
         {
             "attr": "cookie_pwd",
             "name": "COOKIE加密密钥",
             "type": "string",
-            "default": "CKPWD",
-            "suffix": "COOKIE加密密钥",
-            "unit": ""
-        },
-        {
-            "attr": "",
-            "name": "",
-            "type": "string",
-            "default": "http",
-            "suffix": "",
+            "default": "",
+            "suffix": "必填：设置仅此实例使用的随机密钥；升级时必须保留原密钥",
             "unit": ""
         },
         {
@@ -114,12 +106,6 @@
             "type": "string",
             "default": null,
             "desc": "COOKIE加密密钥"
-        },
-        {
-            "key": "",
-            "type": "string",
-            "default": null,
-            "desc": ""
         },
         {
             "key": "app_path",

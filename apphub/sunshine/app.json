@@ -34,7 +34,7 @@
             "unit": ""
         },
         {
-            "attr": "web_port",
+            "attr": "panel_app_port_https",
             "name": "端口",
             "type": "number",
             "default": "47990",
@@ -42,7 +42,7 @@
             "unit": ""
         },
         {
-            "attr": "web_port",
+            "attr": "panel_app_port_http2",
             "name": "端口 2",
             "type": "number",
             "default": "48010",
@@ -116,13 +116,13 @@
     ],
     "env": [
         {
-            "key": "web_port",
+            "key": "panel_app_port_https",
             "type": "port",
             "default": null,
             "desc": "端口"
         },
         {
-            "key": "web_port",
+            "key": "panel_app_port_http2",
             "type": "port",
             "default": null,
             "desc": "端口 2"

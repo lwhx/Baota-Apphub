@@ -36,6 +36,14 @@
             "unit": ""
         },
         {
+            "attr": "panel_db_user_password",
+            "name": "数据库密码",
+            "type": "string",
+            "default": "",
+            "suffix": "必填：请生成独立强密码并妥善保存。升级已运行实例时必须沿用原密码。",
+            "unit": ""
+        },
+        {
             "attr": "cpus",
             "name": "cpu核心数限制",
             "type": "number",
@@ -53,6 +61,12 @@
         }
     ],
     "env": [
+        {
+            "key": "panel_db_user_password",
+            "type": "string",
+            "default": null,
+            "desc": "数据库密码（必填）"
+        },
         {
             "key": "app_path",
             "type": "path",
