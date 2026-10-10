@@ -10,11 +10,26 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install YAML validator
         run: python -m pip install 'PyYAML>=6.0,<7'
       - name: Check application metadata and Compose templates
         run: python scripts/validate_catalog.py
+
+      - name: Validate critical Docker Compose models
+        shell: bash
+        run: |
+          set -euo pipefail
+          for config in \
+            apphub/nginx-proxy-manager/latest/docker-compose.yml \
+            apphub/mysql/8.4.3/docker-compose.yml \
+            apphub/immich/1.122.3/docker-compose.yml \
+            apphub/bitwarden/latest/docker-compose.yml \
+            apphub/pterodactyl-china/latest/docker-compose.yml \
+            apphub/vanblog/latest/docker-compose.yml; do
+              echo "Checking $config"
+              docker compose -f "$config" config --no-interpolate --no-env-resolution --no-path-resolution --quiet
+          done
