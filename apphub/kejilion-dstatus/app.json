@@ -2,8 +2,8 @@
   "appid": -1,
   "appname": "kejilion-dstatus",
   "apptitle": "kejilion - DStatus",
-  "apptype": "Monitor",
-  "appTypeCN": "监控运维",
+  "apptype": "DevOps",
+  "appTypeCN": "DevOps",
   "appversion": [
     {
       "m_version": "latest",

@@ -2,8 +2,8 @@
   "appid": -1,
   "appname": "kejilion-nodeget",
   "apptitle": "kejilion - NodeGet",
-  "apptype": "Monitor",
-  "appTypeCN": "监控运维",
+  "apptype": "DevOps",
+  "appTypeCN": "DevOps",
   "appversion": [
     {
       "m_version": "latest",
