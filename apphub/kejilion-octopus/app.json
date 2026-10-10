@@ -1,0 +1,113 @@
+{
+  "appid": -1,
+  "appname": "kejilion-octopus",
+  "apptitle": "kejilion - Octopus",
+  "apptype": "AI",
+  "appTypeCN": "AI/大模型",
+  "appversion": [
+    {
+      "m_version": "latest",
+      "s_version": []
+    }
+  ],
+  "appdesc": "个人 LLM API 统一聚合与负载均衡平台；默认本机监听，避免开放匿名接口。 来源：kejilion/apps；本模板尚未完成宝塔实机安装测试。",
+  "appstatus": 1,
+  "home": "https://github.com/bestruirui/octopus",
+  "help": "https://github.com/kejilion/apps/blob/main/octopus.conf",
+  "updateat": 1791676800,
+  "depend": null,
+  "field": [
+    {
+      "attr": "domain",
+      "name": "访问域名",
+      "type": "textarea",
+      "default": "",
+      "suffix": "可选；对外服务建议配 HTTPS 与访问控制",
+      "unit": ""
+    },
+    {
+      "attr": "allow_access",
+      "name": "允许公网直连",
+      "type": "checkbox",
+      "default": false,
+      "suffix": "管理类应用默认禁用公网访问",
+      "unit": ""
+    },
+    {
+      "attr": "web_port",
+      "name": "宿主机端口",
+      "type": "number",
+      "default": 45618,
+      "suffix": "应用的 Web/API 端口",
+      "unit": ""
+    },
+    {
+      "attr": "bind_ip",
+      "name": "监听地址",
+      "type": "string",
+      "default": "127.0.0.1",
+      "suffix": "127.0.0.1 仅本机，0.0.0.0 对外开放",
+      "unit": ""
+    },
+    {
+      "attr": "cpus",
+      "name": "CPU 核心数限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    },
+    {
+      "attr": "memory_limit",
+      "name": "内存限制",
+      "type": "number",
+      "default": 0,
+      "suffix": "0 表示不限制",
+      "unit": ""
+    }
+  ],
+  "env": [
+    {
+      "key": "web_port",
+      "type": "port",
+      "default": null,
+      "desc": "宿主机端口"
+    },
+    {
+      "key": "bind_ip",
+      "type": "string",
+      "default": null,
+      "desc": "监听地址"
+    },
+    {
+      "key": "app_path",
+      "type": "path",
+      "default": null,
+      "desc": "应用数据目录"
+    },
+    {
+      "key": "host_ip",
+      "type": "string",
+      "default": null,
+      "desc": "主机 IP"
+    },
+    {
+      "key": "cpus",
+      "type": "number",
+      "default": null,
+      "desc": "CPU 限制"
+    },
+    {
+      "key": "memory_limit",
+      "type": "number",
+      "default": null,
+      "desc": "内存限制"
+    }
+  ],
+  "volumes": {
+    "data": {
+      "type": "path",
+      "desc": "持久化数据目录"
+    }
+  }
+}
