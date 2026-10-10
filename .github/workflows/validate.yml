@@ -33,3 +33,20 @@ jobs:
               echo "Checking $config"
               docker compose -f "$config" config --no-interpolate --no-env-resolution --no-path-resolution --quiet
           done
+
+      - name: Full native Compose syntax audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          total=0
+          failures=0
+          while IFS= read -r -d '' file; do
+            total=$((total + 1))
+            if ! output=$(docker compose -f "$file" config --no-interpolate --no-env-resolution --no-path-resolution --quiet 2>&1); then
+              echo "::error file=$file::Compose model validation failed"
+              printf '%s\n' "$output"
+              failures=$((failures + 1))
+            fi
+          done < <(find apphub -type f -name docker-compose.yml -print0)
+          printf 'Validated %s Compose files: %s failures\n' "$total" "$failures"
+          test "$total" -gt 0 && test "$failures" -eq 0
