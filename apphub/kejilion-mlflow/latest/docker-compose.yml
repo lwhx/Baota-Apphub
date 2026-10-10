@@ -7,12 +7,12 @@ services:
       - baota_net
     ports:
       - "${BIND_IP}:${WEB_PORT}:5000"
-    command: ["mlflow","server","--host","0.0.0.0","--port","5000","--backend-store-uri","sqlite:///mlflow/data/mlflow.db","--default-artifact-root","/mlflow/artifacts"]
+    command: ["mlflow","server","--host","0.0.0.0","--port","5000","--backend-store-uri","sqlite:////mlflow/data/mlflow.db","--default-artifact-root","/mlflow/artifacts"]
     volumes:
       - "${APP_PATH}/data/data:/mlflow/data"
       - "${APP_PATH}/data/artifacts:/mlflow/artifacts"
     environment:
-      - "MLFLOW_TRACKING_URI=sqlite:///mlflow/data/mlflow.db"
+      - "MLFLOW_TRACKING_URI=sqlite:////mlflow/data/mlflow.db"
       - "TZ=Asia/Shanghai"
     deploy:
       resources:
