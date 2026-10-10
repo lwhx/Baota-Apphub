@@ -25,6 +25,9 @@ def validate():
             errors.append(f"{name}: appname/folder mismatch")
         if not meta.get("apptitle", "").startswith("kejilion - "):
             errors.append(f"{name}: display title missing 'kejilion - '")
+        allowed_types = {"BuildWebsite", "Database", "Storage", "Tools", "Middleware", "AI", "Media", "Email", "DevOps", "System"}
+        if meta.get("apptype") not in allowed_types:
+            errors.append(f"{name}: unknown Baota application category")
         if not meta.get("help", "").endswith("/" + upstream_name + ".conf"):
             errors.append(f"{name}: upstream file attribution missing")
         fields = {f["attr"]: f for f in meta.get("field", [])}
