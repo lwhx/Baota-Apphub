@@ -145,6 +145,18 @@ def normalized(app: str, image: Image.Image) -> Image.Image:
     if app in CUSTOM:
         return image
     output = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    if app == "hubproxy":
+        # Upstream favicon is dark/monochrome. Give it a light plate and a
+        # small identifying label so it stays readable in Baota's icon list.
+        d = ImageDraw.Draw(output)
+        d.rounded_rectangle((9, 9, 247, 247), radius=57, fill="#EFF6FF", outline="#A5C7EC", width=2)
+        image.thumbnail((164, 164), Image.Resampling.LANCZOS)
+        output.alpha_composite(image, ((SIZE - image.width) // 2, 21))
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
+        label = "HUB"
+        bounds = d.textbbox((0, 0), label, font=font)
+        d.text(((SIZE - bounds[2] + bounds[0]) // 2, 194), label, fill="#1E497F", font=font)
+        return output
     if app == "fast-note-sync-service":
         d = ImageDraw.Draw(output)
         d.rounded_rectangle((8, 8, 248, 248), radius=55, fill="#1767B3")
