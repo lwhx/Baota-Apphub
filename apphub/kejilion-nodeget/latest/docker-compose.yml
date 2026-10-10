@@ -1,0 +1,45 @@
+services:
+  kejilion-nodeget:
+    image: genshinmc/nodeget:latest
+    container_name: ${APP_NAME}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BIND_IP}:${WEB_PORT}:2211"
+    volumes:
+      - "${APP_PATH}/data/config:/etc/nodeget"
+    environment:
+      - "NODEGET_PORT=2211"
+      - "NODEGET_LOG_FILTER=info"
+      - "NODEGET_DATABASE_URL=postgres://nodeget:${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}@postgres:5432/nodeget"
+      - "TZ=Asia/Shanghai"
+    networks:
+      - baota_net
+      - internal
+    labels:
+      createdBy: bt_apps
+      source: kejilion-apps
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    volumes:
+      - "${APP_PATH}/data/postgres:/var/lib/postgresql/data"
+    environment:
+      - "POSTGRES_DB=nodeget"
+      - "POSTGRES_USER=nodeget"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}"
+      - "TZ=Asia/Shanghai"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodeget -d nodeget"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - internal
+networks:
+  baota_net:
+    external: true
+  internal:
+    driver: bridge

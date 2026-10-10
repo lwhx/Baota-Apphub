@@ -1,0 +1,82 @@
+services:
+  kejilion-sub2api:
+    image: weishaw/sub2api:latest
+    container_name: ${APP_NAME}
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP}:${WEB_PORT}:8080"
+    volumes:
+      - "${APP_PATH}/data/app:/app/data"
+    environment:
+      - AUTO_SETUP=true
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - SERVER_MODE=release
+      - RUN_MODE=standard
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=sub2api
+      - "DATABASE_PASSWORD=${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}"
+      - DATABASE_DBNAME=sub2api
+      - DATABASE_SSLMODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - "ADMIN_EMAIL=${ADMIN_EMAIL:?Please set ADMIN_EMAIL}"
+      - "ADMIN_PASSWORD=${ADMIN_PASSWORD:?Please set ADMIN_PASSWORD}"
+      - "JWT_SECRET=${JWT_SECRET:?Please set JWT_SECRET}"
+      - "TOTP_ENCRYPTION_KEY=${TOTP_ENCRYPTION_KEY:?Please set TOTP_ENCRYPTION_KEY}"
+      - TZ=Asia/Shanghai
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-T", "5", "-O", "/dev/null", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - baota_net
+      - internal
+    labels:
+      createdBy: bt_apps
+      source: kejilion-apps
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=sub2api
+      - POSTGRES_USER=sub2api
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD}"
+      - TZ=Asia/Shanghai
+    volumes:
+      - "${APP_PATH}/data/postgres:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sub2api -d sub2api"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - "${APP_PATH}/data/redis:/data"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+networks:
+  baota_net:
+    external: true
+  internal:
+    driver: bridge
