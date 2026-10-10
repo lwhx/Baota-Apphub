@@ -83,8 +83,8 @@
             "attr": "http_pwd",
             "name": "HTTP 密码",
             "type": "string",
-            "default": "sqlitebrowser",
-            "suffix": "HTTP 密码",
+            "default": "",
+            "suffix": "HTTP 密码 请在安装时设置独立强密码；升级时保留原密码。",
             "unit": ""
         },
         {
