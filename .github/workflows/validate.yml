@@ -51,3 +51,21 @@ jobs:
           done < <(find apphub -type f -name docker-compose.yml -print0)
           printf 'Validated %s Compose files: %s failures\n' "$total" "$failures"
           test "$total" -gt 0 && test "$failures" -eq 0
+
+      - name: Validate kejilion source labels, unique ports and required secrets
+        run: python scripts/validate_kejilion.py
+      - name: Native Compose expansion test for imported apps
+        shell: bash
+        run: |
+          set -euo pipefail
+          export APP_NAME=test-kejilion APP_PATH=/tmp/test-kejilion CPUS=1 MEMORY_LIMIT=512M HOST_IP=127.0.0.1
+          export AIRADIO_ADMIN_PASSWORD=ci-test-password API_KEYS=ci-test-key WEB_CONSOLE_PASSWORD=ci-test-password
+          export API_KEY=ci-test-key WEB_PASSWORD=ci-test-password ADMIN_KEY=ci-test-admin-key
+          export POSTGRES_PASSWORD=ci-test-hex-password ADMIN_EMAIL=admin@example.test ADMIN_PASSWORD=ci-test-password
+          export JWT_SECRET=ci-test-signing-key TOTP_ENCRYPTION_KEY=ci-test-totp-key
+          total=0
+          for file in apphub/kejilion-*/latest/docker-compose.yml; do
+            total=$((total + 1))
+            docker compose --env-file "$(dirname "$file")/.env" -f "$file" config --quiet
+          done
+          printf 'Imported Compose runtime expansion: %s successful\n' "$total"
