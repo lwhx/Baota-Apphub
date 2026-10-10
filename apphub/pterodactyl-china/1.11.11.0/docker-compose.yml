@@ -6,13 +6,15 @@ services:
         limits:
           cpus: ${CPUS}
           memory: ${MEMORY_LIMIT}
-    command: >
-      /bin/sh -c "
-      if [ ! -f /app/var/initialized ]; then
-        php artisan p:user:make --email=${MAIL_FROM} --username=admin --password="${PANEL_ADMIN_PASSWORD}" --admin=1 --name-first=admin --name-last=admin &&
-        touch /app/var/initialized;
-      fi;
-      supervisord -n -c /etc/supervisord.conf"
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        if [ ! -f /app/var/initialized ]; then
+          php artisan p:user:make --email="$${MAIL_FROM}" --username=admin --password="$${PANEL_ADMIN_PASSWORD}" --admin=1 --name-first=admin --name-last=admin
+          touch /app/var/initialized
+        fi
+        exec supervisord -n -c /etc/supervisord.conf
     container_name: ${APP_NAME}
     environment:
       - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD:?Set initial admin password}
