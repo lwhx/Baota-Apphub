@@ -240,14 +240,6 @@
             "unit": ""
         },
         {
-            "attr": "panel_redis_root_password",
-            "name": "Redis 服务密码",
-            "type": "string",
-            "default": "",
-            "suffix": "Redis 服务密码",
-            "unit": ""
-        },
-        {
             "attr": "cpus",
             "name": "cpu核心数限制",
             "type": "number",
@@ -414,12 +406,6 @@
             "type": "string",
             "default": null,
             "desc": "Redis 服务"
-        },
-        {
-            "key": "panel_redis_root_password",
-            "type": "string",
-            "default": null,
-            "desc": "Redis 服务密码"
         },
         {
             "key": "app_path",
