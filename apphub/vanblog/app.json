@@ -124,7 +124,7 @@
             "name": "数据库密码",
             "type": "string",
             "default": "",
-            "suffix": "数据库密码",
+            "suffix": "必填：MongoDB 密码；如果含特殊 URL 字符需百分号编码，升级请沿用原密码",
             "unit": ""
         },
         {

@@ -9,12 +9,13 @@ services:
     command: >
       /bin/sh -c "
       if [ ! -f /app/var/initialized ]; then
-        php artisan p:user:make --email=${MAIL_FROM} --username=admin --password=123456 --admin=1 --name-first=admin --name-last=admin;
+        php artisan p:user:make --email=${MAIL_FROM} --username=admin --password="${PANEL_ADMIN_PASSWORD}" --admin=1 --name-first=admin --name-last=admin &&
         touch /app/var/initialized;
       fi;
       supervisord -n -c /etc/supervisord.conf"
     container_name: ${APP_NAME}
     environment:
+      - PANEL_ADMIN_PASSWORD=${PANEL_ADMIN_PASSWORD:?Set initial admin password}
       - USER_UID=${USER_UID}
       - USER_GID=${USER_GID}
       - DB_CONNECTION=${PANEL_DB_TYPE}
@@ -22,7 +23,7 @@ services:
       - DB_PORT=${PANEL_DB_PORT}
       - DB_DATABASE=${PANEL_DB_NAME}
       - DB_USERNAME=${PANEL_DB_USER}
-      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD}
+      - DB_PASSWORD=${PANEL_DB_USER_PASSWORD:?Set database password}
       - APP_URL=${PANEL_APP_URL}
       - APP_TIMEZONE=${TIME_ZONE}
       - APP_SERVICE_AUTHOR=${APP_SERVICE_AUTHOR}
@@ -39,7 +40,7 @@ services:
       - SESSION_DRIVER=${SESSION_DRIVER}
       - QUEUE_DRIVER=${QUEUE_DRIVER}
       - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PASSWORD=${PANEL_REDIS_ROOT_PASSWORD}
+      - REDIS_PASSWORD=${PANEL_REDIS_ROOT_PASSWORD:?Set Redis password}
       - RECAPTCHA_ENABLED=${RECAPTCHA_ENABLED}
     restart: always
     networks:

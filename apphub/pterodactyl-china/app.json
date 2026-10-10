@@ -83,8 +83,16 @@
             "attr": "panel_db_user_password",
             "name": "数据库用户密码",
             "type": "string",
-            "default": "pterodactyl",
-            "suffix": "数据库用户密码",
+            "default": "",
+            "suffix": "必填：数据库专用强密码；升级保留既有密码",
+            "unit": ""
+        },
+        {
+            "attr": "panel_admin_password",
+            "name": "首次部署管理员密码",
+            "type": "string",
+            "default": "",
+            "suffix": "必填：首次部署创建管理员账号使用，安全保管",
             "unit": ""
         },
         {
@@ -116,7 +124,7 @@
             "name": "缓存服务服务密码",
             "type": "string",
             "default": "",
-            "suffix": "缓存服务服务密码",
+            "suffix": "必填：与 Redis 实例一致的密码；升级保留既有密码",
             "unit": ""
         },
         {
@@ -430,6 +438,12 @@
             "type": "number",
             "default": null,
             "desc": "内存大小限制"
+        },
+        {
+            "key": "panel_admin_password",
+            "type": "string",
+            "default": null,
+            "desc": "首次启动创建管理员账号的密码"
         }
     ],
     "volumes": {}
