@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  保留宝塔原有分类，额外显示外部应用的官方分类与可管理的自定义分类。
 // @author       lwhx
-// @match        *://*/*
+// @match        *://bt.whks.de/docker*
 // @run-at       document-start
 // @grant        none
 // @sandbox      raw
