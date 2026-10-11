@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Baota-Apphub 外部应用分类
 // @namespace    https://github.com/lwhx/Baota-Apphub
-// @version      1.0.0
+// @version      1.0.1
 // @description  保留宝塔原有分类，额外显示外部应用的官方分类与可管理的自定义分类。
 // @author       lwhx
-// @match        *://*/*
+// @match        *://bt.whks.de/docker*
 // @run-at       document-start
 // @grant        none
 // @sandbox      raw
@@ -332,15 +332,26 @@
   function nativeSearch() {
     if (!state.row?.isConnected) return null;
     const scope = state.row.closest('form') || state.row.parentElement?.parentElement || document;
-    const search = exactElements(scope, ['搜索', 'Search'])[0];
-    return search?.closest('button,[role="button"]') || search;
+    const native = element => !element.closest('#bah-external-categories, #bah-category-manager');
+    const search = exactElements(scope, ['搜索', 'Search']).find(native);
+    if (search) return search.closest('button,[role="button"]') || search;
+    // BtSearch renders a clickable div in the Naive UI input prefix/suffix.
+    // The Chinese panel can show only this magnifier, with no text button.
+    const icon = [...scope.querySelectorAll('.bt-search .n-input__suffix .cursor-pointer, .bt-search .n-input__prefix .cursor-pointer')].find(native);
+    if (icon) return icon;
+    // BtSearch also emits its native search action on Enter keyup. Keep this
+    // fallback tied to the application search field rather than arbitrary inputs.
+    return [...scope.querySelectorAll('input:not([disabled]):not([type="hidden"])')].find(input => native(input) && (
+      input.closest('.bt-search') || /支持应用名称.*(?:字段|搜索)/.test(input.placeholder)
+    )) || null;
   }
 
   function reloadNative() {
     if (!state.row?.isConnected) return;
     // Search always reloads the list, even when the original 'All' tab was already selected.
     const target = nativeSearch();
-    if (target) target.click();
+    if (target?.tagName === 'INPUT') target.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+    else if (target) target.click();
     else {
       state.selection = null;
       state.generation++;

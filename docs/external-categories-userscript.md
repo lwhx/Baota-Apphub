@@ -17,7 +17,7 @@
 ## 安装和使用
 
 1. 浏览器安装并启用 Tampermonkey（油猴）或兼容的用户脚本管理器。
-2. 打开 [脚本安装链接](https://raw.githubusercontent.com/lwhx/Baota-Apphub/main/userscripts/baota-external-categories.user.js)，确认安装。**PR 合并前**使用 [开发分支安装链接](https://raw.githubusercontent.com/lwhx/Baota-Apphub/feat/external-category-userscript-20261011/userscripts/baota-external-categories.user.js)。
+2. 打开 [脚本安装链接](https://raw.githubusercontent.com/lwhx/Baota-Apphub/main/userscripts/baota-external-categories.user.js)，确认安装。更新时核对油猴显示的脚本版本，再刷新面板页面。
 3. 刷新已经登录的宝塔面板，进入 **Docker → 应用商店**。
 4. 如尚未导入应用，先通过宝塔原生的 **更多 → 外部应用 → 导入应用** 导入本仓库。
 5. 在新增栏中选择分类。添加自己的分类时，先点击 **全部外部应用**，清空搜索并搜索一次以加载完整外部列表，再打开 **管理分类**。
@@ -34,6 +34,7 @@
   - [外部模板解析](https://github.com/aaPanel/aaPanel/blob/4af59b2386e118fc0e4b2ae838dacac992d16b1c/mod/project/docker/apphub/apphubManage.py)
   - [Vue 应用列表与分类组件](https://github.com/aaPanel/aaPanel/blob/4af59b2386e118fc0e4b2ae838dacac992d16b1c/BTPanel/static/vite/js/view-docker.js)
 - 支持同源 `/mod/docker/com/get_apps` 和 `/mod/docker/com/get_tags`，以及它们的 `/stype` 形式；支持 Fetch、XHR 文本和 XHR JSON 响应。
+- 支持文字搜索按钮、`BtSearch` 前置/后置放大镜图标和应用搜索框的原生回车搜索；新增分类不会误触名为“搜索”的自定义分类。
 - 支持直接 `/docker`、`/v2/docker`、`/new/docker/...`、`/apsess_<会话>/docker/...` 和 Docker hash 路由。在 `/new`、`/v2`、`/apsess_<会话>` 首页载入后，进入 Docker 页面也能挂载。页面动态重绘后自动重新挂载并保持筛选状态，重复注入只保留一份分类栏。
 - 外部模式请求 `app_type=AppHub, p=1, row=20000`，再在整个返回列表上分类筛选；关闭外部模式时不改变原生列表接口参数和响应。源码中的 `get_apps` 已使用最多 20000 条的列表模式。其他版本若自行限制返回条数，需另行适配分页，不能把当前页筛选当作完整分类。
 - 若找不到原生分类或搜索控件，不启动新的外部筛选；显示明确的兼容提示并保留原生状态。已经开启筛选后若控件消失，可点击上方原生分类恢复列表。脚本不模拟未加载的安装卡片，也不自行调用安装接口。
@@ -44,7 +45,7 @@
 
 脚本不修改服务器文件、`app.json` 或 `apptype`，不需要宝塔 API 密钥，不向第三方发送面板数据，也不加载远程代码或远程分类配置。使用 `@grant none`，必须在页面主环境运行以适配原生 Fetch/XHR；脚本管理器或 CSP 阻止主环境注入时，需要检查管理器的页面注入配置。
 
-元数据默认 `@match *://*/*` 以兼容用户的私有面板域名和端口，但运行时限定面板入口，并仅处理指定同源列表接口。可在油猴管理器中将匹配范围进一步限定为自己的面板域名，例如 `https://panel.example.com/*`。不要在其他网站手动启用脚本。
+当前脚本保留仓库维护者设置的 `@match *://bt.whks.de/docker*`，仅在此面板的 Docker 入口载入。其他面板地址需在油猴编辑器中修改此行，例如 `https://panel.example.com/*`；从首页进入 Docker 的 SPA 也需要覆盖首页路径。脚本运行时限定面板入口，并仅处理指定同源列表接口。不要在其他网站手动启用脚本。
 
 新增栏未出现时：确认脚本已启用并刷新页面，检查是否进入 Docker 应用商店；未知页面结构会保持原生页面。分类配置损坏时会显示提示并临时使用默认分类，重新保存可恢复。保存受浏览器存储限制影响时会在弹窗中显示失败信息，保留当前配置。
 

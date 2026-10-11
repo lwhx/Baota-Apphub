@@ -25,9 +25,19 @@ async function panel(t,transport='xhr',options={}) {
   const requests=[],pageErrors=[]; page.on('pageerror',e => pageErrors.push(e.message));
   t.after(() => assert.deepEqual(pageErrors,[],'No page errors'));
   const origin = options.origin || 'https://panel.test';
+  let html = fixture;
+  if (options.searchLayout) {
+    const slot = options.searchLayout === 'icon-prefix' ? 'prefix' : 'suffix';
+    const input = '<div class="n-input__input"><input id="query" placeholder="支持应用名称、字段模糊搜索"></div>';
+    const icon = '<div class="n-input__'+slot+'"><div id="native-search" class="flex items-center cursor-pointer"><svg aria-hidden="true"><path d="M1 1L8 8"></path></svg></div></div>';
+    const search = options.searchLayout.includes('enter') ? input+'<span id="native-search" hidden></span>' : slot === 'prefix' ? icon+input : input+icon;
+    const searchClass = options.searchLayout === 'placeholder-enter' ? 'n-input' : 'n-input bt-search';
+    html = html.replace('<input id="query" placeholder="搜索应用"><button id="native-search" type="button">搜索</button>', '<div class="n-form-item"><div class="'+searchClass+'">'+search+'</div></div>');
+    html = html.replace("document.querySelector('#native-search').onclick = loadNative;", "document.querySelector('#native-search').onclick = loadNative; document.querySelector('#query').onkeyup = event => {if (event.key === 'Enter') loadNative()};");
+  }
   await page.route(`${origin}/**`,async route => {
     const request = route.request();
-    if (!request.url().includes('/mod/docker/com/')) return route.fulfill({contentType:'text/html',body:fixture});
+    if (!request.url().includes('/mod/docker/com/')) return route.fulfill({contentType:'text/html',body:html});
     const method = request.url().split('/com/')[1].split('/')[0];
     const params = new URLSearchParams(request.postData()); requests.push({method,params,headers:request.headers()});
     if (options.respond && await options.respond(route,method,params)) return;
@@ -50,6 +60,30 @@ async function names(page,expected) {
   }
 }
 const choice = (page,selection) => page.locator(`[data-selection="${selection}"]`);
+for (const layout of ['icon-suffix','icon-prefix','enter-only','placeholder-enter']) test(`${layout}: categories refresh through native icon search without a text button`,async t => {
+  const {page,requests} = await panel(t,'xhr',{searchLayout:layout});
+  assert.equal(await page.locator('#native-search').textContent(),'');
+  await choice(page,'official:AI').click(); await names(page,['kejilion-sub2api']);
+  assert.equal(requests.findLast(r => r.method === 'get_apps').params.get('app_type'),'AppHub');
+  await choice(page,'custom:notes').click(); await names(page,['siyuan']);
+  await page.locator('#query').fill('笔记');
+  await page.locator('#query').press('Enter'); await names(page,['siyuan']);
+  await page.getByRole('button',{name:'恢复原生筛选',exact:true}).click();
+  await page.locator('#query').fill(''); await page.locator('#query').press('Enter');
+  await names(page,apps.map(a => a.appname));
+  await choice(page,'all').click(); await names(page,apps.slice(1).map(a => a.appname));
+  await page.locator('[data-native="all"]').click(); await names(page,apps.map(a => a.appname));
+});
+test('a custom category named 搜索 does not replace the native icon search control',async t => {
+  const {page,requests} = await panel(t,'fetch',{searchLayout:'icon-suffix'});
+  await page.getByRole('button',{name:'管理分类',exact:true}).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('textbox',{name:'分类名称',exact:true}).fill('搜索');
+  await dialog.getByRole('button',{name:'保存分类'}).click();
+  await choice(page,'official:AI').click(); await names(page,['kejilion-sub2api']);
+  assert.equal(await choice(page,'official:AI').getAttribute('aria-pressed'),'true');
+  assert.ok(requests.length < 10,'Native refresh must not click the custom category recursively');
+});
 for (const transport of ['xhr','xhr-json','fetch']) test(`${transport}: filters external before rendering and retains native install data`,async t => {
   const {page,requests} = await panel(t,transport);
   try { await names(page,apps.map(app => app.appname)); } catch(error) {
