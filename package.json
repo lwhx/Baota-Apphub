@@ -1,0 +1,30 @@
+{
+  "name": "baota-apphub-userscript-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unit and browser tests for the external category userscript",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "build": "python scripts/build_userscript.py",
+    "test": "python scripts/build_userscript.py --check && node --test tests/userscripts/core.test.cjs",
+    "test:browser": "node --test tests/userscripts/browser.test.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lwhx/Baota-Apphub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lwhx/Baota-Apphub/issues"
+  },
+  "homepage": "https://github.com/lwhx/Baota-Apphub#readme",
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

@@ -7,6 +7,24 @@ on:
 permissions:
   contents: read
 jobs:
+  userscript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Validate generated script and category behavior
+        run: npm test
+      - name: Install browser for UI compatibility tests
+        run: npx playwright install --with-deps chromium
+      - name: Verify native navigation, filtering, installation data and custom groups
+        run: npm run test:browser
   validate:
     runs-on: ubuntu-latest
     steps:
