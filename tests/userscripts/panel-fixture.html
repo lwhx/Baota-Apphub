@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>宝塔分类兼容测试</title>
+<style>
+body {font:14px Arial;margin:24px} form {display:block} .native-categories {display:flex;gap:10px}
+button {cursor:pointer;padding:8px 20px;border:0;border-radius:3px} .active {color:white;background:#20a53a}
+article {padding:18px;border:1px solid #ddd;margin:12px 0} .n-form-item-blank {display:flex}
+.category-tools {display:flex;justify-content:space-between;width:100%}
+</style>
+<main><form onsubmit="return false">
+<input id="query" placeholder="搜索应用"><button id="native-search" type="button">搜索</button>
+<div class="n-form-item"><div class="n-form-item-blank"><div class="category-tools">
+<div class="native-categories">
+<button type="button" data-native="all" class="active"><span>全部</span></button>
+<button type="button" data-native="installed"><span>已安装</span></button>
+<button type="button" data-native="BuildWebsite"><span>建站</span></button>
+<button type="button" data-native="Database"><span>数据库</span></button>
+<button type="button" data-native="Tools"><span>实用工具</span></button>
+<button type="button" id="native-more"><span>更多</span></button>
+</div><button type="button" id="native-update">更新应用列表</button>
+</div></div></div></form><div id="native-list"></div><div id="native-install"></div></main>
+<script>
+window.nativeSelection = 'all'; window.installApp = null;
+const transport = new URLSearchParams(location.search).get('transport') || 'xhr';
+async function call(method, parameters = {}) {
+  const body = new URLSearchParams(parameters).toString();
+  if (transport === 'fetch') return (await fetch(new Request(location.origin + '/mod/docker/com/' + method, {
+    method:'POST',body,headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-Token':'fixture-auth'}
+  }))).json();
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest(); xhr.open('POST','/mod/docker/com/' + method + '/stype');
+    xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded'); xhr.setRequestHeader('X-CSRF-Token','fixture-auth');
+    if (transport === 'xhr-json') xhr.responseType = 'json';
+    xhr.onload = () => resolve(xhr.responseType === 'json' ? xhr.response : JSON.parse(xhr.responseText));
+    xhr.onerror = reject; xhr.send(body);
+  });
+}
+window.loadNative = async function () {
+  const installed = window.nativeSelection === 'installed';
+  const result = await call(installed ? 'get_installed_apps' : 'get_apps', {
+    app_type:installed ? 'all' : window.nativeSelection,query:document.querySelector('#query').value,p:1,row:12
+  });
+  if (result.status === false) {document.querySelector('#native-list').textContent = result.msg;return}
+  const data = result.message?.data || result.data || [];
+  document.querySelector('#native-list').replaceChildren(...data.map(app => {
+    const card = document.createElement('article'); card.dataset.app = app.appname;
+    const title = document.createElement('strong'); title.textContent = app.apptitle;
+    const install = document.createElement('button'); install.textContent = '安装';
+    install.onclick = async () => {window.installApp = app;await call('create_app',{app_name:app.appname,appid:app.appid});document.querySelector('#native-install').textContent = JSON.stringify(app.field)};
+    card.append(title,install); return card;
+  }));
+  window.nativeRendered = (window.nativeRendered || 0) + 1;
+};
+for (const button of document.querySelectorAll('[data-native]')) button.onclick = () => {
+  // Like Vue's native tab: selecting an unchanged value does not reload.
+  if (window.nativeSelection === button.dataset.native) return;
+  window.nativeSelection = button.dataset.native;
+  for (const other of document.querySelectorAll('[data-native]')) other.classList.toggle('active',other === button);
+  document.querySelector('#query').value = ''; loadNative();
+};
+document.querySelector('#native-search').onclick = loadNative;
+document.querySelector('#native-update').onclick = loadNative;
+document.querySelector('#native-more').onclick = () => {
+  const menu = document.createElement('div'); menu.className = 'n-dropdown-menu';
+  const item = document.createElement('button'); item.setAttribute('role','menuitem'); item.textContent = '邮件服务';
+  item.onclick = () => {window.nativeSelection = 'Email';menu.remove();loadNative()};
+  menu.append(item);document.body.append(menu);
+};
+call('get_tags').then(() => loadNative());
+</script></html>

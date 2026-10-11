@@ -1,0 +1,12 @@
+[
+  {"id":"api-gateways","name":"AI/API 网关","apps":["go-chatgpt-api","kejilion-aistudio-to-api","kejilion-antigravity","kejilion-gemini-business2api","kejilion-octopus","kejilion-sub2api","deeplx"]},
+  {"id":"monitoring","name":"监控运维","apps":["amprobe","beszel","beszel-agent","dashdot","grafana","hertzbeat","netdata","nezha-agent","nezha-dash","nezha-dashboard","prometheus","serverstatus","smokeping","tianji","vps-stock-monitor","zabbix-agent","zabbix-server","kejilion-dstatus","kejilion-monitor"]},
+  {"id":"notes","name":"笔记知识库","apps":["blinko","blossom","joplin-server","obsidian","obsidian-zh","siyuan","trilium","trilium-cn","raneto","stackedit","mediawiki","kejilion-fast-note-sync-service"]},
+  {"id":"downloads","name":"下载工具","apps":["115pc","aria2-pro","baidunetdisk","deluge","gopeed","metube","qBittorrent","qbittorrent-vnc","transmission","xunlei","kejilion-nodeget","kejilion-mytube"]},
+  {"id":"radio","name":"影音电台","apps":["audiobookshelf","emby-amilys","embyserver","jellyfin","navidrome","plex","splayer","yesplaymusic","kejilion-airadio","kejilion-global-radio","kejilion-mytube"]},
+  {"id":"games","name":"游戏娱乐","apps":["dosgame","palworld-server","mcsmanager-web","mcsmanager-daemon","pterodactyl-china","kejilion-arena-brawl","kejilion-bomb-party","kejilion-ice-climber-arena","kejilion-neon-arena-fps"]},
+  {"id":"images","name":"图床相册","apps":["chevereto","easyimage2","lsky-pro","piclist","picx","picimpact","slink","immich","mt-photos","photoprism","photoview","kejilion-easyimg"]},
+  {"id":"network","name":"网络代理","apps":["cloudflared","frp-panel","frp-panel-master","frpc","frps","gh-proxy","headscale","headscale-derp","headscale-ui","headscale-webui","nginx-proxy-manager","npc","nps","rathole","tailscale","wireguard","wireguard-easy","wireguard-ui","zerotier-moon","zerotier-one","zerotier-planet","kejilion-hubproxy"]},
+  {"id":"navigation","name":"导航面板","apps":["dashmachine","dashy","glance","heimdall","homepage","mtab","onenav","sun-panel","twonav","van-nav"]},
+  {"id":"kejilion","name":"kejilion 来源","apps":["kejilion-airadio","kejilion-aistudio-to-api","kejilion-antigravity","kejilion-arena-brawl","kejilion-bomb-party","kejilion-copaw","kejilion-dstatus","kejilion-easyimg","kejilion-excalidraw","kejilion-fast-note-sync-service","kejilion-gemini-business2api","kejilion-global-radio","kejilion-hubproxy","kejilion-ice-climber-arena","kejilion-mlflow","kejilion-monitor","kejilion-mytube","kejilion-neon-arena-fps","kejilion-nodeget","kejilion-octopus","kejilion-sub2api","kejilion-wxchat","kejilion-zeroclaw"]}
+]
