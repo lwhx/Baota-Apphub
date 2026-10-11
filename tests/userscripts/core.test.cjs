@@ -70,3 +70,20 @@ test('accepts only same-origin application list/tag API URLs', () => {
   assert.equal(core.endpoint('/mod/docker/com/create_app/stype', origin), null);
   assert.equal(core.endpoint('/random/get_apps', origin), null);
 });
+
+test('saved category order retains known IDs and appends new categories without losing any', () => {
+  assert.deepEqual(core.orderCategories(['official:AI','custom:notes','official:Tools'],['custom:notes','official:old','custom:notes']),
+    ['custom:notes','official:AI','official:Tools']);
+});
+test('category moves support before and after targets without mutating or dropping IDs', () => {
+  const order=['official:AI','custom:notes','custom:kejilion'];
+  assert.deepEqual(core.moveCategory(order,'custom:kejilion','official:AI'),['custom:kejilion','official:AI','custom:notes']);
+  assert.deepEqual(core.moveCategory(order,'official:AI','custom:kejilion',true),['custom:notes','custom:kejilion','official:AI']);
+  assert.deepEqual(core.moveCategory(order,'missing','official:AI'),order);
+  assert.deepEqual(core.moveCategory(order,'official:AI','official:AI'),order);
+  assert.deepEqual(order,['official:AI','custom:notes','custom:kejilion']);
+});
+test('saved category order validates IDs and keeps the fixed all-external action out of sorting', () => {
+  assert.deepEqual(core.validateOrder(['custom:notes','official:AI','custom:notes']),['custom:notes','official:AI']);
+  for (const invalid of [null,{},['all'],['custom:'],[3],Array(401).fill('official:AI')]) assert.throws(() => core.validateOrder(invalid));
+});

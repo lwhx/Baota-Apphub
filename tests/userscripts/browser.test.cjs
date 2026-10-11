@@ -171,15 +171,121 @@ test('corrupt storage falls back visibly and API errors remain readable',async t
 test('legacy data envelope retains external filtering',async t => {
   const {page} = await panel(t,'xhr',{envelope:'data'}); await choice(page,'official:AI').click(); await names(page,['kejilion-sub2api']);
 });
-test('toolbar is a single scrollable row and does not overflow the page',async t => {
+test('toolbar wraps categories and keeps actions visible without horizontal scrolling',async t => {
   const {page} = await panel(t); await page.setViewportSize({width:1000,height:720});
   const layout = await page.locator('#bah-external-categories .bah-choices').evaluate(row => ({
     tops:[...row.querySelectorAll('button')].map(b => Math.round(b.getBoundingClientRect().top)),
     width:row.clientWidth,scroll:row.scrollWidth,document:document.documentElement.scrollWidth,viewport:innerWidth
   }));
-  assert.equal(new Set(layout.tops).size,1);
-  assert.ok(layout.scroll > layout.width);
+  assert.ok(new Set(layout.tops).size > 1);
+  assert.ok(layout.scroll <= layout.width);
   assert.ok(layout.document <= layout.viewport);
+  for (const label of ['管理分类','恢复原生筛选','调整顺序']) {
+    assert.equal(await page.locator('#bah-external-categories .bah-header').getByRole('button',{name:label,exact:true}).count(),1);
+  }
+  await page.locator('#bah-external-categories').evaluate(root => root.style.width='360px');
+  assert.ok(await page.locator('#bah-external-categories .bah-choices').evaluate(row => row.scrollWidth <= row.clientWidth));
+});
+test('category clicks and responses reuse the focused button without resetting toolbar scroll',async t => {
+  const {page} = await panel(t);
+  await page.locator('#bah-external-categories .bah-choices').evaluate(row => {row.style.width='400px';row.style.flexWrap='nowrap';row.style.overflowX='auto';row.scrollLeft=row.scrollWidth});
+  assert.ok(await page.locator('#bah-external-categories .bah-choices').evaluate(row => row.scrollLeft > 0));
+  await page.evaluate(() => window.keptCategory=document.querySelector('[data-selection="custom:kejilion"]'));
+  await choice(page,'custom:kejilion').click(); await names(page,['kejilion-sub2api','kejilion-bomb-party']);
+  assert.equal(await page.evaluate(() => window.keptCategory === document.querySelector('[data-selection="custom:kejilion"]')),true);
+  assert.equal(await choice(page,'custom:kejilion').evaluate(button => button === document.activeElement),true);
+  assert.ok(await page.locator('#bah-external-categories .bah-choices').evaluate(row => row.scrollLeft > 0));
+});
+test('category order supports move-to-front, buttons and keyboard and persists after refresh',async t => {
+  const {page,requests} = await panel(t);
+  const nativeLabels = await page.locator('[data-native]').allTextContents();
+  const before = requests.length;
+  await page.getByRole('button',{name:'调整顺序',exact:true}).click();
+  await choice(page,'custom:kejilion').click();
+  await page.getByRole('button',{name:'移到最前',exact:true}).click();
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  await page.getByRole('button',{name:'后移',exact:true}).click();
+  assert.equal(await page.locator('.bah-choices [data-selection]').nth(1).getAttribute('data-selection'),'custom:kejilion');
+  await choice(page,'custom:kejilion').focus(); await choice(page,'custom:kejilion').press('ArrowLeft');
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  assert.equal(requests.length,before,'Sorting must not request or filter the application list');
+  await page.getByRole('button',{name:'完成排序',exact:true}).click();
+  await choice(page,'custom:kejilion').click(); await names(page,['kejilion-sub2api','kejilion-bomb-party']);
+  await page.reload(); await page.waitForFunction(() => window.nativeRendered >= 1);
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  assert.deepEqual(await page.locator('[data-native]').allTextContents(),nativeLabels);
+});
+test('drag sorting persists and failed storage leaves the prior order intact',async t => {
+  const {page} = await panel(t);
+  await page.getByRole('button',{name:'调整顺序',exact:true}).click();
+  const source = choice(page,'custom:kejilion').locator('..');
+  const target = page.locator('.bah-choices [data-selection]').first().locator('..');
+  await source.dragTo(target,{targetPosition:{x:2,y:12}});
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  await page.evaluate(() => {Storage.prototype.setItem=function(){throw new DOMException('full','QuotaExceededError')}});
+  await choice(page,'custom:kejilion').click(); await page.getByRole('button',{name:'后移',exact:true}).click();
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/保存.*失败/);
+});
+test('corrupt saved order falls back without losing categories and new groups append to the saved order',async t => {
+  const {page} = await panel(t);
+  const total = await page.locator('.bah-choices [data-selection]').count();
+  await page.evaluate(() => localStorage.setItem('baota-apphub:category-order:v1','{broken'));
+  await page.reload(); await page.waitForFunction(() => window.nativeRendered >= 1);
+  assert.equal(await page.locator('.bah-choices [data-selection]').count(),total);
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/顺序无法读取/);
+  await page.getByRole('button',{name:'调整顺序',exact:true}).click(); await choice(page,'custom:kejilion').click();
+  await page.getByRole('button',{name:'移到最前',exact:true}).click(); await page.getByRole('button',{name:'完成排序',exact:true}).click();
+  await page.getByRole('button',{name:'管理分类',exact:true}).click(); const dialog=page.getByRole('dialog');
+  await dialog.getByRole('button',{name:'新增分类'}).click(); await dialog.getByRole('textbox',{name:'分类名称',exact:true}).fill('新增分组');
+  await dialog.getByRole('button',{name:'保存分类'}).click();
+  assert.equal(await page.locator('.bah-choices [data-selection]').first().getAttribute('data-selection'),'custom:kejilion');
+  assert.equal(await page.locator('.bah-choices [data-selection]').last().textContent(),'新增分组');
+  assert.equal(await page.locator('.bah-choices [data-selection]').count(),total+1);
+});
+test('manager retains the loaded catalog across searches and bulk selection affects only visible apps',async t => {
+  const {page} = await panel(t);
+  await choice(page,'all').click(); await names(page,apps.slice(1).map(a => a.appname));
+  await page.locator('#query').fill('笔记'); await page.locator('#native-search').click(); await names(page,['siyuan']);
+  await page.getByRole('button',{name:'管理分类',exact:true}).click(); const dialog=page.getByRole('dialog');
+  await dialog.getByRole('button',{name:'新增分类'}).click();
+  await dialog.getByRole('textbox',{name:'分类名称',exact:true}).fill('批量分类');
+  assert.equal(await dialog.locator('.bah-app-picker input[type="checkbox"]').count(),4);
+  await dialog.getByRole('textbox',{name:'搜索外部应用',exact:true}).fill('kejilion');
+  await dialog.getByRole('button',{name:'全选当前结果',exact:true}).click();
+  assert.match(await dialog.locator('.bah-picker-summary').textContent(),/已选 2/);
+  await dialog.getByRole('textbox',{name:'搜索外部应用',exact:true}).fill('笔记');
+  await dialog.getByRole('button',{name:'全选当前结果',exact:true}).click();
+  await dialog.getByRole('button',{name:'取消当前结果',exact:true}).click();
+  assert.match(await dialog.locator('.bah-picker-summary').textContent(),/已选 2/);
+  await dialog.getByRole('button',{name:'保存分类'}).click();
+  await page.locator('#query').fill('');
+  await page.locator('#bah-external-categories').getByRole('button',{name:'批量分类',exact:true}).click();
+  await names(page,['kejilion-sub2api','kejilion-bomb-party']);
+});
+test('status names the active category and gives guidance for empty results',async t => {
+  const {page} = await panel(t);
+  await choice(page,'custom:kejilion').click(); await names(page,['kejilion-sub2api','kejilion-bomb-party']);
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/kejilion 来源/);
+  await page.locator('#query').fill('不存在的应用'); await page.locator('#native-search').click(); await names(page,[]);
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/没有匹配.*清空搜索/);
+});
+for (const transport of ['xhr','fetch']) test(`${transport}: loading and request failures are visible without misleading result counts`,async t => {
+  let release;
+  const gate = new Promise(resolve => {release=resolve});
+  t.after(() => release());
+  const {page} = await panel(t,transport,{respond:async (route,method,params) => {
+    if (method !== 'get_apps') return false;
+    if (params.get('query') === 'broken') {await route.fulfill({status:503,json:{status:false,msg:'服务暂不可用'}});return true}
+    if (params.get('query') === 'delayed') {await gate;await route.fulfill({json:{status:true,message:{data:apps.slice(1)}}});return true}
+  }});
+  await page.locator('#query').fill('delayed'); await choice(page,'all').click();
+  await page.waitForFunction(() => document.querySelector('#bah-external-categories').getAttribute('aria-busy') === 'true');
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/正在加载/);
+  release(); await names(page,apps.slice(1).map(a => a.appname));
+  await page.locator('#query').fill('broken'); await page.locator('#native-search').click();
+  await page.waitForFunction(() => document.querySelector('#bah-external-categories').getAttribute('aria-busy') === 'false');
+  await page.waitForFunction(() => document.querySelector('#bah-external-categories [role="status"]').textContent.includes('失败'));
 });
 test('viewing installed apps from a native card clears external mode',async t => {
   const {page} = await panel(t); await choice(page,'all').click(); await names(page,apps.slice(1).map(a => a.appname));
@@ -231,4 +337,59 @@ for (const transport of ['xhr','fetch']) test(`${transport}: late external respo
   await page.waitForFunction(count => window.nativeRendered >= count+3,rendered);
   await names(page,apps.map(a => a.appname));
   assert.ok(requests.length < 20,'Stale response handling must not cause a request loop');
+});
+for (const transport of ['xhr','fetch']) test(`${transport}: a late search in the same category cannot leave old cards behind`,async t => {
+  let release,finish;
+  const gate=new Promise(resolve => {release=resolve});
+  const finished=new Promise(resolve => {finish=resolve});
+  t.after(() => release());
+  const {page,requests}=await panel(t,transport,{respond:async (route,method,params) => {
+    if (method !== 'get_apps' || params.get('query') !== 'slow') return false;
+    await gate; await route.fulfill({json:{status:true,message:{data:apps.slice(1,3)}}}); finish(); return true;
+  }});
+  await choice(page,'all').click(); await names(page,apps.slice(1).map(a => a.appname));
+  await page.locator('#query').fill('slow');
+  const pending=page.waitForRequest(request => (request.postData() || '').includes('query=slow'));
+  await page.locator('#native-search').click(); await pending;
+  await page.locator('#query').fill('fast'); await page.locator('#native-search').click(); await names(page,[]);
+  const rendered=await page.evaluate(() => window.nativeRendered);
+  release(); await finished; await page.waitForFunction(count => window.nativeRendered >= count+1,rendered);
+  await names(page,[]);
+  assert.equal(await page.locator('#query').inputValue(),'fast');
+  assert.match(await page.locator('#bah-external-categories [role="status"]').textContent(),/没有匹配/);
+  assert.ok(requests.length < 16,'Search recovery must not cause a request loop');
+});
+for (const transport of ['xhr','fetch']) for (const action of ['search','category']) test(`${transport}: an earlier response waits for the current ${action} request without starting a reload chain`,{timeout:10000},async t => {
+  const pending=[];
+  let delayed=false;
+  t.after(() => {delayed=false;for (const release of pending.splice(0)) release()});
+  const {page,requests}=await panel(t,transport,{respond:async (route,method) => {
+    if (method !== 'get_apps' || !delayed) return false;
+    await new Promise(resolve => pending.push(resolve));
+    await route.fulfill({json:{status:true,message:{data:apps.slice(1)}}});return true;
+  }});
+  await choice(page,'all').click(); await names(page,apps.slice(1).map(a => a.appname));
+  delayed=true;
+  const before=requests.filter(r => r.method === 'get_apps').length;
+  let started=page.waitForRequest(request => (request.postData() || '').includes('app_type=AppHub'));
+  await page.locator('#native-search').click(); await started;
+  started=page.waitForRequest(request => (request.postData() || '').includes('app_type=AppHub'));
+  if (action === 'category') await choice(page,'custom:kejilion').click();
+  else await page.locator('#native-search').click();
+  await started;
+  const expected=2;
+  await page.waitForFunction(() => document.querySelector('#bah-external-categories').getAttribute('aria-busy') === 'true');
+  const deadline=Date.now()+3000;
+  while (pending.length < expected && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve,5));
+  assert.equal(pending.length,expected,'Both user requests must be held before releasing the earlier response');
+  const rendered=await page.evaluate(() => window.nativeRendered);
+  pending.shift()();
+  await page.waitForFunction(count => window.nativeRendered > count,rendered);
+  // Drain the scheduler without allowing the latest response to finish yet.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(requests.filter(r => r.method === 'get_apps').length,before+expected,'An in-flight latest search must not be replaced by recovery requests');
+  assert.equal(await page.locator('#bah-external-categories').getAttribute('aria-busy'),'true');
+  for (const release of pending.splice(0)) release();
+  await page.waitForFunction(() => document.querySelector('#bah-external-categories').getAttribute('aria-busy') === 'false');
+  await names(page,action === 'category' ? ['kejilion-sub2api','kejilion-bomb-party'] : apps.slice(1).map(a => a.appname));
 });
