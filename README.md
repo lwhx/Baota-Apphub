@@ -61,7 +61,7 @@ Baota-Apphub 是一个由社区维护的 Docker 应用资源库，专为宝塔�
 
 ### 外部应用分类（可选油猴脚本）
 
-保留宝塔原有分类，在顶部增加一栏**仅筛选外部应用**的分类：保留当前面板的官方分类，并预置 AI/API 网关、监控运维、笔记知识库、下载工具、游戏娱乐、kejilion 来源等 10 个自定义分组。支持在“管理分类”中新增、重命名、删除和勾选应用归属；使用原生搜索与安装流程。
+保留宝塔原有分类，在顶部增加一栏**仅筛选外部应用**的分类：保留当前面板的官方分类，并预置 AI/API 网关、监控运维、笔记知识库、下载工具、游戏娱乐、kejilion 来源等 10 个自定义分组。分类自动换行，支持拖动、按钮和键盘排序，顺序自动保存。支持在“管理分类”中新增、重命名、删除和批量勾选应用归属；使用原生搜索与安装流程。
 
 - [安装油猴脚本](https://raw.githubusercontent.com/lwhx/Baota-Apphub/main/userscripts/baota-external-categories.user.js)
 - [使用、兼容范围与维护说明](docs/external-categories-userscript.md)

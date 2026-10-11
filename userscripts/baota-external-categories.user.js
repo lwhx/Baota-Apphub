@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Baota-Apphub 外部应用分类
 // @namespace    https://github.com/lwhx/Baota-Apphub
-// @version      1.0.0
+// @version      1.1.0
 // @description  保留宝塔原有分类，额外显示外部应用的官方分类与可管理的自定义分类。
 // @author       lwhx
 // @match        *://bt.whks.de/docker*
@@ -308,7 +308,26 @@
     } catch { return null; }
   }
 
-  const core = { isExternal, appList, filterPayload, rewriteBody, validateGroups, endpoint };
+  function validateOrder(order) {
+    if (!Array.isArray(order) || order.length > 400 || order.some(value => typeof value !== 'string' || !/^(official|custom):[^\s:]{1,200}$/.test(value))) {
+      throw new Error('分类顺序配置格式不正确。');
+    }
+    return [...new Set(order)];
+  }
+
+  function orderCategories(values, saved) {
+    const available = new Set(values);
+    return [...new Set([...saved.filter(value => available.has(value)), ...values])];
+  }
+
+  function moveCategory(order, value, target, after = false) {
+    if (value === target || !order.includes(value) || !order.includes(target)) return [...order];
+    const result = order.filter(item => item !== value);
+    result.splice(result.indexOf(target) + Number(after), 0, value);
+    return result;
+  }
+
+  const core = { isExternal, appList, filterPayload, rewriteBody, validateGroups, endpoint, validateOrder, orderCategories, moveCategory };
   if (typeof module === 'object' && module.exports) module.exports = core;
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   // Match broadly because panel domains, ports and SPA entry points are user-specific.
@@ -318,12 +337,18 @@
   if (!panelEntry() || window.__baotaApphubCategoriesInstalled) return;
   window.__baotaApphubCategoriesInstalled = true;
   const KEY = 'baota-apphub:external-categories:v1';
-  const state = { selection: null, groups: validateGroups(DEFAULT_GROUPS), tags: DEFAULT_TAGS, apps: [], row: null, root: null, internalClick: false, generation: 0 };
+  const ORDER_KEY = 'baota-apphub:category-order:v1';
+  const state = { selection: null, groups: validateGroups(DEFAULT_GROUPS), tags: DEFAULT_TAGS, apps: [], catalog: new Map(), row: null, root: null, internalClick: false, generation: 0, loading: false, loadError: '', requestId: 0 };
+  const ui = { order: [], sorting: false, focused: null, dragged: null, orderProblem: '' };
   let storageProblem = '';
   try {
     const saved = localStorage.getItem(KEY);
     if (saved !== null) state.groups = validateGroups(JSON.parse(saved));
   } catch { storageProblem = '本地分类配置无法读取，暂用默认分类；可在管理分类中重新保存。'; }
+  try {
+    const saved = localStorage.getItem(ORDER_KEY);
+    if (saved !== null) ui.order = validateOrder(JSON.parse(saved));
+  } catch { ui.orderProblem = '分类顺序无法读取，暂用默认顺序；重新调整顺序可恢复。'; }
 
   const node = (tag, text, attrs = {}) => {
     const element = document.createElement(tag);
@@ -338,22 +363,54 @@
   };
   const active = () => !!state.selection && !!state.root?.isConnected && dockerView();
 
+  function beginRequest(kind, generation) {
+    if (kind !== 'get_apps' || generation !== state.generation || !active()) return 0;
+    state.loading = true;
+    state.loadError = '';
+    const id = ++state.requestId;
+    renderBar();
+    return id;
+  }
+
+  function finishRequest(id, generation, error = '') {
+    if (!id) return;
+    if (id !== state.requestId || generation !== state.generation) {
+      // An in-flight latest response will replace these stale native cards.
+      // Recover only after it has finished, avoiding an endless reload chain.
+      if (!state.loading) scheduleReload(true);
+      return;
+    }
+    state.loading = false;
+    state.loadError = error;
+    renderBar();
+  }
+
   function clearInstalledMode(kind) {
     if (kind !== 'get_installed_apps' || !state.selection) return;
     state.selection = null;
     state.generation++;
+    state.loading = false;
+    state.loadError = '';
     renderBar();
   }
 
-  function consume(kind, payload, generation) {
+  function consume(kind, payload, generation, requestId) {
     const list = appList(payload);
     if (kind === 'get_tags' && list.length) {
       const tags = list.filter(tag => tag && typeof tag.type === 'string' && typeof tag.desc === 'string' && !['all', 'installed', 'AppHub'].includes(tag.type));
       if (tags.length) state.tags = [...new Map(tags.sort((a, b) => (a.sort || 0) - (b.sort || 0)).map(tag => [tag.type, tag])).values()];
     }
-    if (kind === 'get_apps' && listSlot(payload)) state.apps = list.filter(isExternal);
+    if (kind === 'get_apps' && listSlot(payload)) {
+      const external = list.filter(isExternal);
+      for (const app of external) state.catalog.set(app.appname, app);
+      if (generation === state.generation && (!requestId || requestId === state.requestId)) state.apps = external;
+    }
+    if (kind === 'get_apps') {
+      const message = typeof payload?.msg === 'string' ? payload.msg : typeof payload?.message === 'string' ? payload.message : '应用列表未能读取，请重试。';
+      finishRequest(requestId, generation, listSlot(payload) ? '' : message);
+    }
     renderBar();
-    if (kind === 'get_apps' && generation !== state.generation) scheduleReload();
+    if (kind === 'get_apps' && generation !== state.generation && !state.loading) scheduleReload(true);
     return kind === 'get_apps' ? filterPayload(payload, active() ? state.selection : null, state.groups) : payload;
   }
 
@@ -380,7 +437,8 @@
           if (!info.cache || info.cache.raw !== raw) {
             try {
               const payload = typeof raw === 'string' ? JSON.parse(raw) : raw;
-              const filtered = consume(info.kind, payload, info.generation);
+              const filtered = consume(info.kind, payload, info.generation, info.requestId);
+              info.consumed = true;
               info.cache = { raw, value: typeof raw === 'string' && filtered !== payload ? JSON.stringify(filtered) : filtered === payload ? raw : filtered };
             } catch { info.cache = { raw, value: raw }; }
           }
@@ -393,10 +451,18 @@
   XMLHttpRequest.prototype.send = function (body) {
     const meta = xhrMeta.get(this);
     if (meta) meta.generation = state.generation;
+    if (meta) {
+      meta.requestId = beginRequest(meta.kind, meta.generation);
+      meta.consumed = false;
+      if (meta.requestId) this.addEventListener('loadend', () => {
+        if (!meta.consumed) finishRequest(meta.requestId, meta.generation, `应用列表请求失败${this.status ? `（HTTP ${this.status}）` : ''}，请重试。`);
+      }, { once: true });
+    }
     if (meta?.kind === 'get_apps' && active() && String(meta.method).toUpperCase() === 'POST') {
       try { body = rewriteBody(body); } catch { /* Preserve unsupported requests. */ }
     }
-    return xhrSend.call(this, body);
+    try { return xhrSend.call(this, body); }
+    catch (error) { finishRequest(meta?.requestId, meta?.generation, '应用列表请求失败，请重试。'); throw error; }
   };
 
   if (window.fetch) {
@@ -422,11 +488,17 @@
           fetchInit = undefined;
         } catch { /* Preserve unsupported requests. */ }
       }
-      const result = await originalFetch.call(this, fetchInput, fetchInit);
-      if (!result.ok) return result;
+      const requestId = beginRequest(kind, generation);
+      let result;
+      try { result = await originalFetch.call(this, fetchInput, fetchInit); }
+      catch (error) { finishRequest(requestId, generation, '应用列表请求失败，请重试。'); throw error; }
+      if (!result.ok) {
+        finishRequest(requestId, generation, `应用列表请求失败（HTTP ${result.status}），请重试。`);
+        return result;
+      }
       try {
         const payload = await result.clone().json();
-        const filtered = consume(kind, payload, generation);
+        const filtered = consume(kind, payload, generation, requestId);
         if (filtered === payload) return result;
         const headers = new Headers(result.headers);
         headers.delete('content-length');
@@ -434,7 +506,7 @@
         const replacement = new Response(JSON.stringify(filtered), { status: result.status, statusText: result.statusText, headers });
         for (const key of ['url', 'redirected', 'type']) Object.defineProperty(replacement, key, { value: result[key] });
         return replacement;
-      } catch { return result; }
+      } catch { finishRequest(requestId, generation, '应用列表响应无法读取，请重试。'); return result; }
     };
   }
 
@@ -485,27 +557,162 @@
     if (!preserveSelection) {
       if (state.selection) state.generation++;
       state.selection = null;
+      state.loading = false;
+      state.loadError = '';
+      ui.sorting = false;
+      ui.focused = null;
+      ui.dragged = null;
     }
+  }
+
+  function categoryOptions() {
+    return [...state.tags.map(tag => [`official:${tag.type}`, tag.desc]), ...state.groups.map(group => [`custom:${group.id}`, group.name])];
+  }
+
+  function currentOrder() {
+    return orderCategories(categoryOptions().map(([value]) => value), ui.order);
+  }
+
+  function saveOrder(order, focus) {
+    try {
+      const validated = validateOrder(order);
+      localStorage.setItem(ORDER_KEY, JSON.stringify(validated));
+      ui.order = validated;
+      ui.focused = focus;
+      ui.orderProblem = '';
+      renderBar();
+      [...state.root.querySelectorAll('[data-selection]')].find(element => element.dataset.selection === focus)?.focus({ preventScroll: true });
+    } catch (error) {
+      ui.orderProblem = `分类顺序保存失败：${error.message}；保留原顺序。`;
+      renderBar();
+    }
+  }
+
+  function moveFocused(direction) {
+    const order = currentOrder();
+    const index = order.indexOf(ui.focused);
+    if (index < 0) return;
+    if (direction === 'first') saveOrder(moveCategory(order, ui.focused, order[0]), ui.focused);
+    else if (direction === 'last') saveOrder(moveCategory(order, ui.focused, order.at(-1), true), ui.focused);
+    else {
+      const target = order[index + direction];
+      if (target) saveOrder(moveCategory(order, ui.focused, target, direction > 0), ui.focused);
+    }
+  }
+
+  function categoryItem(value) {
+    const item = node('div', undefined, { class: 'bah-category-item', 'data-category': value });
+    const choice = button('', () => {
+      if (ui.sorting) { ui.focused = value; renderBar(); }
+      else select(value);
+    }, { 'data-selection': value });
+    choice.addEventListener('focus', () => { if (ui.sorting && ui.focused !== value) { ui.focused = value; renderBar(); } });
+    choice.addEventListener('keydown', event => {
+      if (!ui.sorting) return;
+      const direction = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1, Home: 'first', End: 'last' }[event.key];
+      if (direction === undefined) return;
+      event.preventDefault();
+      ui.focused = value;
+      moveFocused(direction);
+    });
+    item.append(choice);
+    item.addEventListener('dragstart', event => {
+      if (!ui.sorting) return event.preventDefault();
+      ui.dragged = value;
+      ui.focused = value;
+      event.dataTransfer.setData('text/plain', value);
+      event.dataTransfer.effectAllowed = 'move';
+      item.classList.add('bah-dragging');
+    });
+    item.addEventListener('dragover', event => {
+      if (!ui.sorting || !ui.dragged || ui.dragged === value) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      item.classList.add('bah-drop-target');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('bah-drop-target'));
+    item.addEventListener('drop', event => {
+      if (!ui.sorting || !ui.dragged) return;
+      event.preventDefault();
+      const rect = item.getBoundingClientRect();
+      saveOrder(moveCategory(currentOrder(), ui.dragged, value, event.clientX > rect.left + rect.width / 2), ui.dragged);
+      ui.dragged = null;
+      item.classList.remove('bah-drop-target');
+    });
+    item.addEventListener('dragend', () => {
+      ui.dragged = null;
+      for (const sibling of state.root?.querySelectorAll('.bah-category-item') || []) sibling.classList.remove('bah-dragging', 'bah-drop-target');
+    });
+    return item;
   }
 
   function renderBar() {
     if (!state.root?.isConnected) return;
-    const choices = node('div', undefined, { class: 'bah-choices' });
-    choices.append(node('span', '外部应用分类', { class: 'bah-label' }));
-    for (const [value, label] of [['all', '全部外部应用'], ...state.tags.map(tag => [`official:${tag.type}`, tag.desc]), ...state.groups.map(group => [`custom:${group.id}`, group.name])]) {
-      choices.append(button(label, () => select(value), { 'data-selection': value, 'aria-pressed': String(state.selection === value) }));
+    if (!state.root.querySelector('.bah-header')) {
+      const header = node('div', undefined, { class: 'bah-header' });
+      header.append(node('span', '外部应用分类', { class: 'bah-label' }), button('全部外部应用', () => select('all'), { 'data-selection': 'all' }));
+      const actions = node('div', undefined, { class: 'bah-actions' });
+      actions.append(button('管理分类', openManager, { class: 'bah-manage' }), button('调整顺序', () => {
+        ui.sorting = !ui.sorting;
+        ui.dragged = null;
+        if (ui.sorting && !currentOrder().includes(ui.focused)) ui.focused = currentOrder().includes(state.selection) ? state.selection : currentOrder()[0];
+        renderBar();
+      }, { class: 'bah-sort-toggle' }), button('恢复原生筛选', () => select(null), { class: 'bah-reset' }));
+      header.append(actions);
+      const controls = node('div', undefined, { class: 'bah-order-controls', 'aria-label': '分类排序操作' });
+      controls.append(node('span', '', { class: 'bah-sort-label' }), button('移到最前', () => moveFocused('first'), { 'data-move': 'first' }), button('前移', () => moveFocused(-1), { 'data-move': 'previous' }), button('后移', () => moveFocused(1), { 'data-move': 'next' }));
+      state.root.append(header, node('div', undefined, { class: 'bah-choices' }), controls, node('div', '', { class: 'bah-status', role: 'status' }));
     }
-    choices.append(button('管理分类', openManager, { class: 'bah-manage' }));
-    choices.append(button('恢复原生筛选', () => select(null), { class: 'bah-reset' }));
-    const text = active() ? `当前仅显示外部导入应用，匹配 ${appList(filterPayload(state.apps, state.selection, state.groups)).length} 个。` : '点击分类，仅筛选外部导入应用；点击上方原生分类可恢复原生筛选。';
-    state.root.replaceChildren(choices, node('div', storageProblem || text, { class: 'bah-status', role: 'status' }));
+    const labels = new Map(categoryOptions());
+    const order = currentOrder();
+    const choices = state.root.querySelector('.bah-choices');
+    const existing = new Map([...choices.children].map(item => [item.dataset.category, item]));
+    for (const [index, value] of order.entries()) {
+      const item = existing.get(value) || categoryItem(value);
+      const choice = item.firstElementChild;
+      const label = labels.get(value);
+      if (choice.textContent !== label) choice.textContent = label;
+      choice.title = `${value.startsWith('official:') ? '官方分类' : '自定义分类'}：${label}${ui.sorting ? '；可拖动或使用方向键调整顺序' : ''}`;
+      choice.setAttribute('aria-pressed', String(state.selection === value));
+      item.draggable = ui.sorting;
+      item.dataset.orderSelected = String(ui.sorting && ui.focused === value);
+      if (choices.children[index] !== item) choices.insertBefore(item, choices.children[index] || null);
+    }
+    for (const [value, item] of existing) if (!labels.has(value)) item.remove();
+    const all = state.root.querySelector('[data-selection="all"]');
+    all.setAttribute('aria-pressed', String(state.selection === 'all'));
+    const sortToggle = state.root.querySelector('.bah-sort-toggle');
+    sortToggle.textContent = ui.sorting ? '完成排序' : '调整顺序';
+    sortToggle.setAttribute('aria-pressed', String(ui.sorting));
+    const controls = state.root.querySelector('.bah-order-controls');
+    controls.hidden = !ui.sorting;
+    controls.querySelector('.bah-sort-label').textContent = ui.focused && labels.has(ui.focused) ? `排序目标：${labels.get(ui.focused)}` : '请点选要移动的分类';
+    const index = order.indexOf(ui.focused);
+    for (const action of controls.querySelectorAll('button')) action.disabled = index < 0 || (action.dataset.move === 'next' ? index === order.length - 1 : index === 0);
+    const selected = state.selection === 'all' ? '全部外部应用' : labels.get(state.selection) || '当前分类';
+    const count = appList(filterPayload(state.apps, state.selection, state.groups)).length;
+    let text = '点击分类，仅筛选外部导入应用；上方宝塔原生分类保持不变。';
+    if (active()) text = state.loading ? `正在加载“${selected}”的外部应用…` : state.loadError ? `${selected}：${state.loadError}` : count ? `当前分类：${selected} · 外部导入应用 ${count} 个。` : `“${selected}”没有匹配的外部应用，可清空搜索或在管理分类中分配应用。`;
+    if (ui.sorting) text = '点选分类后使用前移、后移或移到最前；也可拖动分类，或用方向键调整，Home / End 移至首尾。顺序自动保存，点击“完成排序”继续筛选。';
+    const status = state.root.querySelector('[role="status"]');
+    const message = storageProblem || ui.orderProblem || text;
+    if (status.textContent !== message) status.textContent = message;
+    state.root.setAttribute('aria-busy', String(state.loading && active()));
   }
 
   let reloadScheduled = false;
-  function scheduleReload() {
+  let reloadRequired = false;
+  function scheduleReload(onlyIfIdle = false) {
+    if (!onlyIfIdle) reloadRequired = true;
     if (reloadScheduled) return;
     reloadScheduled = true;
-    setTimeout(() => { reloadScheduled = false; reloadNative(); }, 0);
+    setTimeout(() => {
+      const required = reloadRequired;
+      reloadScheduled = false;
+      reloadRequired = false;
+      // A user action may have started a newer request after recovery was queued.
+      if (required || !state.loading) reloadNative();
+    }, 0);
   }
 
   function select(value) {
@@ -516,6 +723,8 @@
     }
     state.selection = value;
     state.generation++;
+    state.loading = !!value;
+    state.loadError = '';
     renderBar();
     if (value) {
       state.internalClick = true;
@@ -530,18 +739,31 @@
   function nativeSearch() {
     if (!state.row?.isConnected) return null;
     const scope = state.row.closest('form') || state.row.parentElement?.parentElement || document;
-    const search = exactElements(scope, ['搜索', 'Search'])[0];
-    return search?.closest('button,[role="button"]') || search;
+    const native = element => !element.closest('#bah-external-categories, #bah-category-manager');
+    const search = exactElements(scope, ['搜索', 'Search']).find(native);
+    if (search) return search.closest('button,[role="button"]') || search;
+    // BtSearch renders a clickable div in the Naive UI input prefix/suffix.
+    // The Chinese panel can show only this magnifier, with no text button.
+    const icon = [...scope.querySelectorAll('.bt-search .n-input__suffix .cursor-pointer, .bt-search .n-input__prefix .cursor-pointer')].find(native);
+    if (icon) return icon;
+    // BtSearch also emits its native search action on Enter keyup. Keep this
+    // fallback tied to the application search field rather than arbitrary inputs.
+    return [...scope.querySelectorAll('input:not([disabled]):not([type="hidden"])')].find(input => native(input) && (
+      input.closest('.bt-search') || /支持应用名称.*(?:字段|搜索)/.test(input.placeholder)
+    )) || null;
   }
 
   function reloadNative() {
     if (!state.row?.isConnected) return;
     // Search always reloads the list, even when the original 'All' tab was already selected.
     const target = nativeSearch();
-    if (target) target.click();
+    if (target?.tagName === 'INPUT') target.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+    else if (target) target.click();
     else {
       state.selection = null;
       state.generation++;
+      state.loading = false;
+      state.loadError = '';
       renderBar();
       state.root.querySelector('[role="status"]').textContent = '未识别到宝塔搜索按钮，请点击上方原生分类恢复列表，并反馈面板版本和页面截图。';
     }
@@ -556,6 +778,8 @@
     if (nativeChoice) {
       state.selection = null;
       state.generation++;
+      state.loading = false;
+      state.loadError = '';
       renderBar();
       scheduleReload();
     }
@@ -568,27 +792,33 @@
     let selectedId = draft[0]?.id || null;
     let membership = new Set();
     const heading = node('h3', '管理外部应用分类');
-    const hint = node('p', '自定义分类可多选应用；官方分类始终保留。配置保存到当前浏览器的当前面板地址。');
+    const hint = node('p', '自定义分类可多选应用；官方分类始终保留。保存后生效，取消放弃修改。请先清空页面搜索并加载“全部外部应用”，确保目录完整。');
     const groupList = node('select', undefined, { 'aria-label': '选择自定义分类' });
     const name = node('input', undefined, { 'aria-label': '分类名称', maxlength: '40', placeholder: '分类名称' });
     const search = node('input', undefined, { 'aria-label': '搜索外部应用', placeholder: '搜索应用名称或标识' });
     const apps = node('div', undefined, { class: 'bah-app-picker' });
+    const summary = node('p', '', { class: 'bah-picker-summary', 'aria-live': 'polite' });
     const error = node('p', '', { role: 'alert' });
-    const catalog = () => [...new Map(state.apps.map(app => [app.appname, app])).values()];
+    const catalog = () => [...state.catalog.values()];
+    let visible = [];
+    function updateSummary() { summary.textContent = `已选 ${membership.size} 个 · 当前显示 ${visible.length} 个 · 本次已加载目录 ${state.catalog.size} 个`; }
     function renderApps() {
       const query = search.value.trim().toLocaleLowerCase();
       const known = catalog();
       const combined = [...known, ...[...membership].filter(id => !known.some(app => app.appname === id)).map(id => ({ appname: id, apptitle: `${id}（当前列表未加载，保留分配）` }))];
       apps.replaceChildren();
-      for (const app of combined.filter(app => `${app.apptitle} ${app.appname}`.toLocaleLowerCase().includes(query))) {
+      visible = combined.filter(app => `${app.apptitle} ${app.appname}`.toLocaleLowerCase().includes(query));
+      for (const app of visible) {
         const label = node('label');
         const checkbox = node('input', undefined, { type: 'checkbox', value: app.appname });
         checkbox.checked = membership.has(app.appname);
-        checkbox.addEventListener('change', () => checkbox.checked ? membership.add(app.appname) : membership.delete(app.appname));
+        checkbox.addEventListener('change', () => { if (checkbox.checked) membership.add(app.appname); else membership.delete(app.appname); updateSummary(); });
         label.append(checkbox, document.createTextNode(`${app.apptitle || app.appname} · ${app.appname}`));
         apps.append(label);
       }
       if (!combined.length) apps.append(node('p', '请先点击“全部外部应用”加载应用，然后打开管理分类。'));
+      else if (!visible.length) apps.append(node('p', '没有匹配的应用，请修改搜索条件。'));
+      updateSummary();
     }
     function stash() {
       const current = draft.find(group => group.id === selectedId);
@@ -605,6 +835,8 @@
     }
     groupList.addEventListener('change', () => { stash(); selectedId = groupList.value; load(); });
     search.addEventListener('input', renderApps);
+    const pickerControls = node('div', undefined, { class: 'bah-controls' });
+    pickerControls.append(button('全选当前结果', () => { if (!selectedId) return; for (const app of visible) membership.add(app.appname); renderApps(); }), button('取消当前结果', () => { if (!selectedId) return; for (const app of visible) membership.delete(app.appname); renderApps(); }));
     const controls = node('div', undefined, { class: 'bah-controls' });
     controls.append(
       button('新增分类', () => { stash(); selectedId = `user-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`; draft.push({ id: selectedId, name: '新分类', apps: [] }); load(); }),
@@ -627,7 +859,7 @@
       button('取消', () => { dialog.close(); dialog.remove(); }),
     );
     dialog.addEventListener('cancel', () => dialog.remove());
-    dialog.append(heading, hint, groupList, name, search, apps, error, controls);
+    dialog.append(heading, hint, groupList, name, search, pickerControls, summary, apps, error, controls);
     document.body.append(dialog);
     load();
     dialog.showModal();
@@ -636,19 +868,32 @@
   function start() {
     if (!document.body) return;
     const style = node('style', `
-      #bah-external-categories { width:100%; margin:10px 0 16px; font-size:13px; color:inherit; }
-      #bah-external-categories .bah-choices { display:flex; flex-wrap:nowrap; align-items:center; gap:8px; overflow-x:auto; padding-bottom:4px; }
-      #bah-external-categories .bah-label { margin-right:8px; white-space:nowrap; }
-      #bah-external-categories button, #bah-category-manager button { flex-shrink:0; white-space:nowrap; padding:7px 12px; border:1px solid #dcdfe6; border-radius:3px; background:#f0f2f5; color:#333; cursor:pointer; font:inherit; }
+      #bah-external-categories { width:100%; min-width:0; box-sizing:border-box; margin:10px 0 16px; padding:12px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px; color:inherit; }
+      #bah-external-categories .bah-header, #bah-external-categories .bah-actions, #bah-external-categories .bah-order-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+      #bah-external-categories .bah-header { margin-bottom:10px; }
+      #bah-external-categories .bah-actions { margin-left:auto; }
+      #bah-external-categories .bah-choices { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+      #bah-external-categories .bah-category-item { flex:0 0 auto; display:flex; max-width:100%; min-width:0; border-radius:3px; }
+      #bah-external-categories .bah-label { margin-right:4px; font-weight:600; }
+      #bah-external-categories button, #bah-category-manager button { max-width:100%; white-space:normal; overflow-wrap:anywhere; padding:7px 12px; border:1px solid #dcdfe6; border-radius:3px; background:#f0f2f5; color:#333; cursor:pointer; font:inherit; }
+      #bah-external-categories button:focus-visible, #bah-category-manager button:focus-visible { outline:2px solid #159632; outline-offset:2px; }
+      #bah-external-categories button:disabled { opacity:.45; cursor:default; }
       #bah-external-categories button[aria-pressed=true] { background:#20a53a; border-color:#20a53a; color:#fff; }
-      #bah-external-categories .bah-manage, #bah-external-categories .bah-reset { background:transparent; color:#159632; }
-      #bah-external-categories .bah-status { margin-top:8px; color:#888; font-size:12px; }
+      #bah-external-categories .bah-manage, #bah-external-categories .bah-reset, #bah-external-categories .bah-sort-toggle:not([aria-pressed=true]) { background:transparent; color:#159632; }
+      #bah-external-categories .bah-category-item[draggable=true] > button { cursor:grab; }
+      #bah-external-categories .bah-category-item[data-order-selected=true] { outline:2px solid #159632; outline-offset:2px; }
+      #bah-external-categories .bah-dragging { opacity:.5; }
+      #bah-external-categories .bah-drop-target { box-shadow:0 0 0 2px #159632; }
+      #bah-external-categories .bah-order-controls { margin-top:12px; padding-top:10px; border-top:1px solid #e5e7eb; }
+      #bah-external-categories .bah-order-controls[hidden] { display:none; }
+      #bah-external-categories .bah-status { margin-top:10px; color:#777; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
       #bah-category-manager { width:min(680px,90vw); max-height:85vh; box-sizing:border-box; border:1px solid #ddd; border-radius:8px; padding:24px; background:#fff; color:#333; font-size:14px; }
       #bah-category-manager::backdrop { background:rgba(0,0,0,.35); }
       #bah-category-manager > input, #bah-category-manager > select { box-sizing:border-box; width:100%; padding:8px; margin:6px 0; border:1px solid #ddd; border-radius:3px; }
       #bah-category-manager .bah-app-picker { max-height:34vh; overflow:auto; margin:12px 0; }
       #bah-category-manager label { display:flex; align-items:center; gap:8px; padding:6px; overflow-wrap:anywhere; }
       #bah-category-manager .bah-controls { display:flex; flex-wrap:wrap; gap:8px; }
+      #bah-category-manager .bah-picker-summary { color:#777; font-size:12px; }
       #bah-category-manager [role=alert] { color:#b42318; }
       @media (prefers-color-scheme:dark) { #bah-category-manager { background:#252525; color:#ddd; } }
     `);
