@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Check imported kejilion template names, source references, ports and secret policy."""
 import json
+import hashlib
+import struct
 import pathlib
 import re
 import sys
@@ -14,6 +16,11 @@ def validate():
     if len(apps) < 23:
         errors.append(f"Expected at least 23 imported applications, found {len(apps)}")
     ports = {}
+    icon_hashes = {}
+    sources = json.loads((ROOT.parent / "scripts/kejilion_icon_sources.json").read_text(encoding="utf-8"))
+    custom = {"arena-brawl", "bomb-party", "ice-climber-arena", "neon-arena-fps", "wxchat", "hubproxy"}
+    if set(sources) | custom != {p.name.removeprefix("kejilion-") for p in apps}:
+        errors.append("Every kejilion app needs an official icon source or declared custom artwork")
     for directory in apps:
         name = directory.name
         upstream_name = name.removeprefix("kejilion-")
@@ -21,6 +28,22 @@ def validate():
         compose = (directory / "latest/docker-compose.yml").read_text(encoding="utf-8")
         env_text = (directory / "latest/.env").read_text(encoding="utf-8")
 
+        # Verify fixed PNG dimensions and reject accidental reuse of one icon.
+        icon_path = directory / "icon.png"
+        if not icon_path.is_file():
+            errors.append(f"{name}: no icon.png")
+        else:
+            raw = icon_path.read_bytes()
+            if len(raw) < 64 or raw[:8] != b"\x89PNG\r\n\x1a\n":
+                errors.append(f"{name}: icon.png must be a valid PNG")
+            else:
+                width, height = struct.unpack(">II", raw[16:24])
+                if (width, height) != (256, 256):
+                    errors.append(f"{name}: icon should be 256x256 (got {width}x{height})")
+                digest = hashlib.sha256(raw).hexdigest()
+                if digest in icon_hashes:
+                    errors.append(f"{name}: duplicate artwork from {icon_hashes[digest]}")
+                icon_hashes[digest] = name
         if meta.get("appname") != name:
             errors.append(f"{name}: appname/folder mismatch")
         if not meta.get("apptitle", "").startswith("kejilion - "):

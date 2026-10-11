@@ -1,0 +1,104 @@
+{
+  "airadio": {
+    "repository": "moli-xia/AIradio",
+    "ref": "main",
+    "path": "public/favicon.png",
+    "git_blob_sha": "1da3a07c01fd631d48ed6e760c8d2622ec5d4747"
+  },
+  "aistudio-to-api": {
+    "repository": "iBUHub/AIStudioToAPI",
+    "ref": "main",
+    "path": "ui/public/AIStudio_icon.svg",
+    "git_blob_sha": "225095ca6f256be13df63ee6072941bf1d8b947d"
+  },
+  "antigravity": {
+    "repository": "lbjlaq/Antigravity-Manager",
+    "ref": "main",
+    "path": "public/icon.png",
+    "git_blob_sha": "81200572037059d9ee85a71c3d1090f035ce679f"
+  },
+  "copaw": {
+    "repository": "qizhuocai/CoPaw",
+    "ref": "main",
+    "path": "website/public/copaw-symbol.png",
+    "git_blob_sha": "b9dd46c94187569bdb013825f89404cdccada07c"
+  },
+  "dstatus": {
+    "repository": "fev125/dstatus",
+    "ref": "main",
+    "path": "static/icons/icon.svg",
+    "git_blob_sha": "3f85af5b98229b1a9e38f42ff3ee295b15743f15"
+  },
+  "excalidraw": {
+    "repository": "homarr-labs/dashboard-icons",
+    "ref": "main",
+    "path": "png/excalidraw.png",
+    "git_blob_sha": "097e83401f91054c241e67584570d2da9db23e5c"
+  },
+  "fast-note-sync-service": {
+    "repository": "haierkeys/fast-note-sync-service",
+    "ref": "master",
+    "path": "frontend/static/images/icon.svg",
+    "git_blob_sha": "3879aa398523788c35f52566fb5921f36a8338a9"
+  },
+  "gemini-business2api": {
+    "repository": "yukkcat/gemini-business2api",
+    "ref": "main",
+    "path": "docs/logo.svg",
+    "git_blob_sha": "bbe134fc4537151d368c561e9e54cd4baba11e88"
+  },
+  "global-radio": {
+    "repository": "moli-xia/global-radio",
+    "ref": "main",
+    "path": "public/icon-512x512.png",
+    "git_blob_sha": "736e302d5d3cb95bb675536b92ff2cc4d4541716"
+  },
+  "monitor": {
+    "repository": "monitor-probe/monitor",
+    "ref": "main",
+    "path": "web-admin/public/apple-touch-icon.png",
+    "git_blob_sha": "98be41edc218eed5637324271160a65a242c9584"
+  },
+  "easyimg": {
+    "repository": "chaos-zhu/easyimg",
+    "ref": "main",
+    "path": "public/favicon.png",
+    "git_blob_sha": "cc1a551179d70e995985df3e72e3d529d62a5ea1"
+  },
+  "mlflow": {
+    "repository": "mlflow/mlflow",
+    "ref": "master",
+    "path": "assets/logo.svg",
+    "git_blob_sha": "6dd3cde27236c1a7e17f31c99c79afeaaa8d53fd"
+  },
+  "octopus": {
+    "repository": "bestruirui/octopus",
+    "ref": "master",
+    "path": "web/public/web-app-manifest-512x512.png",
+    "git_blob_sha": "be090670296e2db4f0f3cff02bf930ad56f40453"
+  },
+  "zeroclaw": {
+    "repository": "zeroclaw-labs/zeroclaw",
+    "ref": "master",
+    "path": "web/public/logo.png",
+    "git_blob_sha": "46bd9b86c96790626b140af6396610e761106b47"
+  },
+  "nodeget": {
+    "repository": "NodeSeekDev/NodeGet-board",
+    "ref": "main",
+    "path": "public/android-icon-192x192.png",
+    "git_blob_sha": "0901e72e1095e467b073bd06ef9afcb8c06cd955"
+  },
+  "mytube": {
+    "repository": "franklioxygen/MyTube",
+    "ref": "master",
+    "path": "frontend/public/favicon.png",
+    "git_blob_sha": "1d6bc66948c39cf0ab5e7f0f934e012fb50c24df"
+  },
+  "sub2api": {
+    "repository": "Wei-Shaw/sub2api",
+    "ref": "main",
+    "path": "assets/logo.svg",
+    "git_blob_sha": "aae9dae91354303488a6b186493a0220818222fc"
+  }
+}
